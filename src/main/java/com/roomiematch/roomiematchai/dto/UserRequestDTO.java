@@ -7,12 +7,12 @@ import jakarta.validation.constraints.Size;
 // DTO for user registration request (client -> controller -> service)
 public class UserRequestDTO {
 
-    @Email
-    @NotBlank
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
     private String email;
 
-    @NotBlank
-    @Size(min = 4)
+    @NotBlank(message = "Password is required")
+    @Size(min = 4, message = "Password must be at least 4 characters")
     private String password;
 
     public String getEmail() {

@@ -1,7 +1,7 @@
 package com.roomiematch.roomiematchai.controller;
 
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
-import com.roomiematch.roomiematchai.entity.User;
+import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,9 +32,9 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(request));
     }
 
-    // Retrieves all registered users
+    // Retrieves all registered users (passwords excluded via DTO)
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 }
