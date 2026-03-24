@@ -1,7 +1,8 @@
 package com.roomiematch.roomiematchai.controller;
 
+import com.roomiematch.roomiematchai.dto.ApiResponse;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
-import com.roomiematch.roomiematchai.dto.UserResponseDTO;
+import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,13 +29,15 @@ public class UserController {
 
     // Registers a new user; validates request body before processing
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody UserRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(request));
+    public ResponseEntity<ApiResponse<User>> registerUser(@Valid @RequestBody UserRequestDTO request) {
+        User savedUser = userService.registerUser(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("User saved", savedUser));
     }
 
-    // Retrieves all registered users (passwords excluded via DTO)
+    // Retrieves all registered users
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(new ApiResponse<>("Users fetched successfully", users));
     }
 }

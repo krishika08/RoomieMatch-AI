@@ -6,11 +6,16 @@ import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 // Service bean containing user-related business logic
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
 
@@ -18,8 +23,10 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    // Registers a user after checking for duplicate email; returns confirmation message
-    public String registerUser(UserRequestDTO request) {
+    // Registers a user after checking for duplicate email; returns the saved User
+    public User registerUser(UserRequestDTO request) {
+        log.info("Registering user with email: {}", request.getEmail());
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already registered: " + request.getEmail());
         }
@@ -28,16 +35,15 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        return "User registered successfully";
+        log.info("User saved successfully");
+
+        return savedUser;
     }
 
-    // Fetches all users and maps them to response DTOs (excludes password)
-    public List<UserResponseDTO> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(user -> new UserResponseDTO(user.getId(), user.getEmail()))
-                .toList();
+    // Fetches all users
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }
