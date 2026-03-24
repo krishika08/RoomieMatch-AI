@@ -17,13 +17,18 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Permit all requests — security is only used for BCrypt at this stage
+    // Permit all requests to /auth/** and H2 console; require authentication for everything else
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Allow H2 console iframe
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/h2-console/**").permitAll() // keep H2 accessible for testing
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // keep Swagger accessible
+                .anyRequest().authenticated()
+            )
+            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Allow H2 iframe
         return http.build();
     }
 }
