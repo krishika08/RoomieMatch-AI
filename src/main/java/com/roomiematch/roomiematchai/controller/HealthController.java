@@ -1,19 +1,16 @@
 package com.roomiematch.roomiematchai.controller;
 
-// spring tools to import 
-import org.springframework.web.bind.annotation.GetMapping; // get request --> maps HTTPS 
-import org.springframework.web.bind.annotation.RequestMapping; // request mapping(/LOGIN )
-import org.springframework.web.bind.annotation.RestController; // rest api contoller
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-// TELLS SPRING THIS IS A REST CONTROLLER
+// Handles health-check API requests
 @RestController
-// BASE URL FOR ALL ENDPOINTS IN THIS CONTROLLER
 @RequestMapping("/api")
 public class HealthController {
 
-    // GET REQUEST --> maps HTTPS GET requests to this method
+    // Returns a simple status message to confirm the backend is running
     @GetMapping("/health")
-    // this method will be executed when a GET request is made to /api/health
     public String healthCheck() {
         return "RoomieMatch AI Backend Running";
     }
