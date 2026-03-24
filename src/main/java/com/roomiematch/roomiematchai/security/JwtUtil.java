@@ -16,9 +16,15 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Secret key for HMAC-SHA256
-    private static final String SECRET_KEY_STRING = "dGhpc2lzYXZlcnlzZWN1cmVzZWNyZXRrZXlmb3Jyb29taWVtYXRjaGFpYWJzb2x1dGVseXNhZmVhbmRzb3VuZA==";
-    private final Key SECRET_KEY = Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes());
+    @org.springframework.beans.factory.annotation.Value("${jwt.secret}")
+    private String secretKeyString;
+
+    private Key secretKey;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -34,7 +40,7 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -52,7 +58,7 @@ public class JwtUtil {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours validity
-                .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
