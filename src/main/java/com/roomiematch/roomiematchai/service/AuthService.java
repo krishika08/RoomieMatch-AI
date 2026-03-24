@@ -6,6 +6,9 @@ import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.DuplicateEmailException;
 import com.roomiematch.roomiematchai.exception.InvalidCredentialsException;
 import com.roomiematch.roomiematchai.repository.UserRepository;
+import com.roomiematch.roomiematchai.security.CustomUserDetailsService;
+import com.roomiematch.roomiematchai.security.JwtUtil;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +22,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, CustomUserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
     }
 
     public User register(UserRequestDTO request) {
@@ -41,7 +48,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public User login(LoginRequestDTO request) {
+    public String login(LoginRequestDTO request) {
         log.info("AuthService: Login attempt for email: {}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -53,6 +60,8 @@ public class AuthService {
         }
 
         log.info("AuthService: Successful login for email: {}", request.getEmail());
-        return user;
+        
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        return jwtUtil.generateToken(userDetails);
     }
 }

@@ -24,6 +24,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
     @Column(name = "created_at", updatable = false)
     private java.time.LocalDateTime createdAt;
 
