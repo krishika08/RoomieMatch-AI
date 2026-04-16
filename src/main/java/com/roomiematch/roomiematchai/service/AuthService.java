@@ -2,6 +2,7 @@ package com.roomiematch.roomiematchai.service;
 
 import com.roomiematch.roomiematchai.dto.LoginRequestDTO;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
+import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.DuplicateEmailException;
 import com.roomiematch.roomiematchai.exception.InvalidCredentialsException;
@@ -32,7 +33,7 @@ public class AuthService {
         this.userDetailsService = userDetailsService;
     }
 
-    public User register(UserRequestDTO request) {
+    public UserResponseDTO register(UserRequestDTO request) {
         log.info("AuthService: Registering new user with email: {}", request.getEmail());
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -45,7 +46,8 @@ public class AuthService {
         // Hash the password
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return new UserResponseDTO(savedUser.getId(), savedUser.getEmail());
     }
 
     public String login(LoginRequestDTO request) {

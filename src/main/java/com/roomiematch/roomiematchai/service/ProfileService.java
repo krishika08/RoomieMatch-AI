@@ -9,6 +9,7 @@ import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProfileService {
@@ -27,6 +28,7 @@ public class ProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("Logged in user not found"));
     }
 
+    @Transactional
     public StudentProfileResponseDTO createProfile(StudentProfileRequestDTO request) {
         User user = getLoggedInUser();
 
@@ -55,6 +57,7 @@ public class ProfileService {
         return new StudentProfileResponseDTO(profile);
     }
 
+    @Transactional
     public StudentProfileResponseDTO updateProfile(StudentProfileRequestDTO request) {
         User user = getLoggedInUser();
         StudentProfile profile = profileRepository.findByUserId(user.getId())

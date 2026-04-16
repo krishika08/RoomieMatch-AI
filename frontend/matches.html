@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoomieMatch AI — Find Matches</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <span class="logo">🏠 RoomieMatch AI</span>
+    <nav>
+      <a href="index.html">Login</a>
+      <a href="profile.html">Profile</a>
+      <a href="matches.html" class="active">Matches</a>
+    </nav>
+  </nav>
+
+  <!-- MAIN CARD -->
+  <div class="card wide">
+    <div class="card-header">
+      <span class="icon">🤝</span>
+      <h1>Find Your Matches</h1>
+      <p>We'll score every user against your profile preferences</p>
+    </div>
+
+    <div class="alert" id="alert" role="alert"></div>
+
+    <button class="btn btn-success" id="findBtn">
+      🔍 Find My Matches
+    </button>
+
+    <!-- Loader (hidden until needed) -->
+    <div class="loader" id="loader" style="display:none;"></div>
+
+    <!-- Results injected here -->
+    <div id="results"></div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    requireAuth();
+
+    const alertEl  = document.getElementById('alert');
+    const findBtn  = document.getElementById('findBtn');
+    const loader   = document.getElementById('loader');
+    const results  = document.getElementById('results');
+
+    findBtn.addEventListener('click', async () => {
+      // Reset UI
+      results.innerHTML = '';
+      alertEl.classList.remove('show');
+      loader.style.display  = 'block';
+      findBtn.disabled      = true;
+      findBtn.textContent   = 'Searching…';
+
+      try {
+        const res  = await fetch(`${API_BASE}/matches`, { headers: authHeaders() });
+        const json = await res.json();
+
+        if (!res.ok) {
+          showAlert(alertEl, 'error', json.message || 'Could not fetch matches.');
+          return;
+        }
+
+        const matches = json.data;
+
+        if (!matches || matches.length === 0) {
+          results.innerHTML = `
+            <div class="empty-state">
+              <span class="emoji">🔎</span>
+              <h3>No matches found yet</h3>
+              <p>Other users need to create their profiles first.</p>
+            </div>`;
+          return;
+        }
+
+        // Header row
+        results.innerHTML = `
+          <p style="margin-top:24px;font-size:0.85rem;color:var(--muted);">
+            Found <strong style="color:var(--text)">${matches.length}</strong>
+            potential roommate${matches.length !== 1 ? 's' : ''} — sorted by compatibility
+          </p>`;
+
+        // Cards grid
+        const grid = document.createElement('div');
+        grid.className = 'matches-grid';
+
+        matches.forEach(m => {
+          const cls = scoreBadgeClass(m.compatibilityScore);
+
+          const card = document.createElement('div');
+          card.className = 'match-card';
+          card.innerHTML = `
+            <div class="score-badge ${cls}">${m.compatibilityScore}%</div>
+            <h3>${m.email}</h3>
+            <p class="uid">User #${m.userId}</p>
+
+            <div class="tag-list">
+              ${m.sleepSchedule    ? `<span class="tag">😴 ${m.sleepSchedule}</span>`    : ''}
+              ${m.cleanlinessLevel ? `<span class="tag">🧹 ${m.cleanlinessLevel}</span>` : ''}
+              ${m.noiseTolerance   ? `<span class="tag">🔊 ${m.noiseTolerance}</span>`   : ''}
+              ${m.socialLevel      ? `<span class="tag">🤝 ${m.socialLevel}</span>`      : ''}
+              ${m.studyHabits      ? `<span class="tag">📚 ${m.studyHabits}</span>`      : ''}
+              ${m.guestFrequency   ? `<span class="tag">🚪 ${m.guestFrequency}</span>`   : ''}
+              ${m.roomTemperature  ? `<span class="tag">🌡️ ${m.roomTemperature}</span>`  : ''}
+            </div>
+
+            <div class="score-row">
+              <span>Match</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:0%" data-w="${m.compatibilityScore}"></div>
+              </div>
+              <span>${m.compatibilityScore}%</span>
+            </div>`;
+
+          grid.appendChild(card);
+        });
+
+        results.appendChild(grid);
+
+        // Animate score bars after render
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.score-bar-fill').forEach(bar => {
+            bar.style.width = bar.dataset.w + '%';
+          });
+        });
+
+      } catch {
+        showAlert(alertEl, 'error', 'Connection error. Is the backend running?');
+      } finally {
+        loader.style.display = 'none';
+        findBtn.disabled     = false;
+        findBtn.textContent  = '🔍 Find My Matches';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ package com.roomiematch.roomiematchai.controller;
 import com.roomiematch.roomiematchai.dto.ApiResponse;
 import com.roomiematch.roomiematchai.dto.LoginRequestDTO;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
-import com.roomiematch.roomiematchai.entity.User;
+import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,8 +24,8 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<User>> signup(@Valid @RequestBody UserRequestDTO request) {
-        User savedUser = authService.register(request);
+    public ResponseEntity<ApiResponse<UserResponseDTO>> signup(@Valid @RequestBody UserRequestDTO request) {
+        UserResponseDTO savedUser = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>("User successfully registered", savedUser));
     }
 

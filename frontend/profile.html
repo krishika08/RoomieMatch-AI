@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoomieMatch AI — My Profile</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <span class="logo">🏠 RoomieMatch AI</span>
+    <nav>
+      <a href="index.html">Login</a>
+      <a href="profile.html" class="active">Profile</a>
+      <a href="matches.html">Matches</a>
+    </nav>
+  </nav>
+
+  <!-- CARD -->
+  <div class="card wide">
+    <div class="card-header">
+      <span class="icon">🧑‍🎓</span>
+      <h1>My Roommate Profile</h1>
+      <p>Tell us your preferences — we'll find your ideal match</p>
+    </div>
+
+    <div class="alert" id="alert" role="alert"></div>
+
+    <form id="profileForm" novalidate>
+      <div class="form-grid">
+
+        <!-- Sleep Schedule -->
+        <div class="form-group">
+          <label for="sleepSchedule">😴 Sleep Schedule</label>
+          <select id="sleepSchedule" required>
+            <option value="">— Select —</option>
+            <option>Early Bird</option>
+            <option>Night Owl</option>
+            <option>Flexible</option>
+          </select>
+        </div>
+
+        <!-- Cleanliness -->
+        <div class="form-group">
+          <label for="cleanlinessLevel">🧹 Cleanliness Level</label>
+          <select id="cleanlinessLevel" required>
+            <option value="">— Select —</option>
+            <option>Very Clean</option>
+            <option>Average</option>
+            <option>Relaxed</option>
+          </select>
+        </div>
+
+        <!-- Noise Tolerance -->
+        <div class="form-group">
+          <label for="noiseTolerance">🔊 Noise Tolerance</label>
+          <select id="noiseTolerance" required>
+            <option value="">— Select —</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+
+        <!-- Social Level -->
+        <div class="form-group">
+          <label for="socialLevel">🤝 Social Level</label>
+          <select id="socialLevel" required>
+            <option value="">— Select —</option>
+            <option>Introvert</option>
+            <option>Ambivert</option>
+            <option>Extrovert</option>
+          </select>
+        </div>
+
+        <!-- Study Habits -->
+        <div class="form-group">
+          <label for="studyHabits">📚 Study Habits</label>
+          <select id="studyHabits" required>
+            <option value="">— Select —</option>
+            <option>Quiet Environment</option>
+            <option>Group Study</option>
+            <option>Background Music</option>
+            <option>Library Only</option>
+          </select>
+        </div>
+
+        <!-- Guest Frequency -->
+        <div class="form-group">
+          <label for="guestFrequency">🚪 Guest Frequency</label>
+          <select id="guestFrequency" required>
+            <option value="">— Select —</option>
+            <option>Rarely</option>
+            <option>Occasionally</option>
+            <option>Frequent</option>
+          </select>
+        </div>
+
+        <!-- Room Temperature -->
+        <div class="form-group">
+          <label for="roomTemperature">🌡️ Room Temperature</label>
+          <select id="roomTemperature" required>
+            <option value="">— Select —</option>
+            <option>Cool</option>
+            <option>Moderate</option>
+            <option>Warm</option>
+          </select>
+        </div>
+
+      </div><!-- /form-grid -->
+
+      <div style="display:flex; gap:12px; margin-top:8px;">
+        <button type="button" class="btn btn-outline" id="loadBtn" style="flex:1;">
+          📥 Load My Profile
+        </button>
+        <button type="submit" class="btn btn-primary" id="saveBtn" style="flex:2;">
+          💾 Save Profile
+        </button>
+      </div>
+
+    </form>
+
+    <p class="footer-link">
+      Ready? <a href="matches.html">Find your matches →</a>
+    </p>
+
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn btn-outline" id="logoutBtn" style="width:auto;padding:8px 20px;font-size:0.8rem;">
+        🚪 Log Out
+      </button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    requireAuth();
+
+    const alertEl  = document.getElementById('alert');
+    const form     = document.getElementById('profileForm');
+    const loadBtn  = document.getElementById('loadBtn');
+    const saveBtn  = document.getElementById('saveBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const fields = ['sleepSchedule','cleanlinessLevel','noiseTolerance',
+                    'socialLevel','studyHabits','guestFrequency','roomTemperature'];
+
+    // ── LOAD existing profile ────────────────────────────
+    loadBtn.addEventListener('click', async () => {
+      loadBtn.textContent = 'Loading…';
+      loadBtn.disabled = true;
+      try {
+        const res  = await fetch(`${API_BASE}/profile`, { headers: authHeaders() });
+        const json = await res.json();
+
+        if (!res.ok) {
+          showAlert(alertEl, 'error', json.message || 'No profile found yet.');
+          return;
+        }
+
+        // Populate selects
+        const data = json.data;
+        fields.forEach(f => {
+          const el = document.getElementById(f);
+          if (el && data[f]) el.value = data[f];
+        });
+        showAlert(alertEl, 'success', 'Profile loaded!');
+      } catch {
+        showAlert(alertEl, 'error', 'Connection error. Is the backend running?');
+      } finally {
+        loadBtn.textContent = '📥 Load My Profile';
+        loadBtn.disabled = false;
+      }
+    });
+
+    // ── SAVE profile (create or update) ─────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const body = {};
+      for (const f of fields) {
+        const v = document.getElementById(f).value;
+        if (!v) { showAlert(alertEl, 'error', 'Please fill in all preference fields.'); return; }
+        body[f] = v;
+      }
+
+      saveBtn.textContent = 'Saving…';
+      saveBtn.disabled = true;
+
+      // Try POST first; if 409 (already exists) use PUT
+      try {
+        let res = await fetch(`${API_BASE}/profile`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify(body)
+        });
+
+        if (res.status === 409) {
+          // Profile already exists → update
+          res = await fetch(`${API_BASE}/profile`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify(body)
+          });
+        }
+
+        const json = await res.json();
+        if (!res.ok) {
+          showAlert(alertEl, 'error', json.message || 'Could not save profile.');
+        } else {
+          showAlert(alertEl, 'success', json.message || 'Profile saved!');
+        }
+      } catch {
+        showAlert(alertEl, 'error', 'Connection error. Is the backend running?');
+      } finally {
+        saveBtn.textContent = '💾 Save Profile';
+        saveBtn.disabled = false;
+      }
+    });
+
+    // ── LOGOUT ──────────────────────────────────────────
+    logoutBtn.addEventListener('click', () => {
+      clearToken();
+      window.location.href = 'index.html';
+    });
+
+    // Auto-load on page open
+    loadBtn.click();
+  </script>
+</body>
+</html>
