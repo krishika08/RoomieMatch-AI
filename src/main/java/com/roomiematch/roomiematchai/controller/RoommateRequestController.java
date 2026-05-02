@@ -71,4 +71,5 @@ public class RoommateRequestController {
         RoommateRequestResponseDTO response = requestService.respondToRequest(requestId, status);
         return ResponseEntity.ok(new ApiResponse<>("Request " + status.toLowerCase() + " successfully", response));
     }
+
 }

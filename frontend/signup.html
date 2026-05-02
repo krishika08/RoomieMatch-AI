@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>RoomieMatch AI — Sign In</title>
-  <meta name="description" content="Sign in to RoomieMatch AI and find your ideal roommate.">
+  <title>RoomieMatch AI — Create Account</title>
+  <meta name="description" content="Create your RoomieMatch AI account.">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
@@ -12,7 +12,6 @@
 </head>
 <body class="auth-page">
 
-  <!-- Left: Form -->
   <div class="auth-left">
     <div class="auth-card" data-aos="fade-up" data-aos-duration="500">
 
@@ -21,46 +20,45 @@
           <div class="auth-logo-icon"><i class="fa-solid fa-house-chimney"></i></div>
           <span class="auth-logo-name">RoomieMatch AI</span>
         </div>
-        <h1>Welcome back</h1>
-        <p>Sign in to continue to your account</p>
+        <h1>Create your account</h1>
+        <p>Get started for free — no credit card needed</p>
       </div>
 
-      <form id="loginForm" novalidate>
+      <form id="signupForm" novalidate>
         <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input type="email" id="email" class="form-control"
+          <label class="form-label" for="regEmail">Email address</label>
+          <input type="email" id="regEmail" class="form-control"
                  placeholder="you@university.edu" autocomplete="email" required>
         </div>
         <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input type="password" id="password" class="form-control"
-                 placeholder="Enter your password" autocomplete="current-password" required>
+          <label class="form-label" for="regPassword">Password</label>
+          <input type="password" id="regPassword" class="form-control"
+                 placeholder="Minimum 8 characters" minlength="8" autocomplete="new-password" required>
         </div>
         <div class="form-group" style="margin-top:1.25rem;">
-          <button type="submit" class="btn btn-primary btn-w100" id="loginBtn">
-            Sign in
+          <button type="submit" class="btn btn-primary btn-w100" id="signupBtn">
+            Create account
           </button>
         </div>
       </form>
 
       <div class="auth-footer">
-        No account yet? <a href="signup.html">Create one &rarr;</a>
+        Already have an account? <a href="index.html">Sign in &rarr;</a>
       </div>
 
     </div>
   </div>
 
-  <!-- Right: Info panel -->
   <div class="auth-right">
     <div class="auth-panel" data-aos="fade-left" data-aos-duration="600">
-      <div class="panel-icon">🏠</div>
-      <h2>Find your perfect roommate</h2>
-      <p>RoomieMatch AI uses machine learning to pair you with the most compatible co-living partners.</p>
+      <div class="panel-icon">🤝</div>
+      <h2>Join thousands of students</h2>
+      <p>Our AI engine matches you with roommates who share your lifestyle, study habits, and schedule.</p>
       <ul class="feature-list">
-        <li><i class="fa-solid fa-check-circle"></i> AI-powered compatibility scoring</li>
-        <li><i class="fa-solid fa-check-circle"></i> Lifestyle &amp; preference matching</li>
-        <li><i class="fa-solid fa-check-circle"></i> Seamless request management</li>
-        <li><i class="fa-solid fa-check-circle"></i> Secure JWT authentication</li>
+        <li><i class="fa-solid fa-check-circle"></i> Fill your living preferences</li>
+        <li><i class="fa-solid fa-check-circle"></i> Get AI-ranked match suggestions</li>
+        <li><i class="fa-solid fa-check-circle"></i> Send and accept requests instantly</li>
+        <li><i class="fa-solid fa-check-circle"></i> Start living comfortably</li>
       </ul>
     </div>
   </div>
