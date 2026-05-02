@@ -5,8 +5,6 @@ import com.roomiematch.roomiematchai.entity.StudentProfile;
 import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
 import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
-import com.roomiematch.roomiematchai.repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -17,11 +15,11 @@ import java.util.stream.Collectors;
 public class MatchingService {
 
     private final StudentProfileRepository profileRepository;
-    private final UserRepository userRepository;
+    private final AuthContextService authContext;
 
-    public MatchingService(StudentProfileRepository profileRepository, UserRepository userRepository) {
+    public MatchingService(StudentProfileRepository profileRepository, AuthContextService authContext) {
         this.profileRepository = profileRepository;
-        this.userRepository = userRepository;
+        this.authContext = authContext;
     }
 
     /**
@@ -31,9 +29,7 @@ public class MatchingService {
      */
     public List<MatchResponseDTO> getMatchesForCurrentUser() {
         // 1. Get the logged-in user
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Logged in user not found"));
+        User currentUser = authContext.getLoggedInUser();
 
         // 2. Get the current user's profile
         StudentProfile currentProfile = profileRepository.findByUserId(currentUser.getId())

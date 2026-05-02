@@ -6,8 +6,6 @@ import com.roomiematch.roomiematchai.entity.StudentProfile;
 import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
 import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
-import com.roomiematch.roomiematchai.repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,22 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProfileService {
 
     private final StudentProfileRepository profileRepository;
-    private final UserRepository userRepository;
+    private final AuthContextService authContext;
 
-    public ProfileService(StudentProfileRepository profileRepository, UserRepository userRepository) {
+    public ProfileService(StudentProfileRepository profileRepository, AuthContextService authContext) {
         this.profileRepository = profileRepository;
-        this.userRepository = userRepository;
-    }
-
-    private User getLoggedInUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Logged in user not found"));
+        this.authContext = authContext;
     }
 
     @Transactional
     public StudentProfileResponseDTO createProfile(StudentProfileRequestDTO request) {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
 
         if (profileRepository.findByUserId(user.getId()).isPresent()) {
             throw new IllegalStateException("Profile already exists for this user.");
@@ -51,7 +43,7 @@ public class ProfileService {
     }
 
     public StudentProfileResponseDTO getProfile() {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
         StudentProfile profile = profileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found for user"));
         return new StudentProfileResponseDTO(profile);
@@ -59,7 +51,7 @@ public class ProfileService {
 
     @Transactional
     public StudentProfileResponseDTO updateProfile(StudentProfileRequestDTO request) {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
         StudentProfile profile = profileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Profile not found for user"));
 
@@ -75,3 +67,4 @@ public class ProfileService {
         return new StudentProfileResponseDTO(updatedProfile);
     }
 }
+

@@ -7,7 +7,6 @@ import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
 import com.roomiematch.roomiematchai.repository.RoommateRequestRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,19 +18,14 @@ public class RoommateRequestService {
 
     private final RoommateRequestRepository requestRepository;
     private final UserRepository userRepository;
+    private final AuthContextService authContext;
 
-    public RoommateRequestService(RoommateRequestRepository requestRepository, UserRepository userRepository) {
+    public RoommateRequestService(RoommateRequestRepository requestRepository,
+                                  UserRepository userRepository,
+                                  AuthContextService authContext) {
         this.requestRepository = requestRepository;
         this.userRepository = userRepository;
-    }
-
-    // ──────────────────────────────────────────────
-    //  Helper: Get the currently logged-in user from JWT
-    // ──────────────────────────────────────────────
-    private User getLoggedInUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Logged in user not found"));
+        this.authContext = authContext;
     }
 
     // ──────────────────────────────────────────────
@@ -39,7 +33,7 @@ public class RoommateRequestService {
     // ──────────────────────────────────────────────
     @Transactional
     public RoommateRequestResponseDTO sendRequest(Long receiverId) {
-        User sender = getLoggedInUser();
+        User sender = authContext.getLoggedInUser();
 
         // Validation: Cannot send request to yourself
         if (sender.getId().equals(receiverId)) {
@@ -50,10 +44,16 @@ public class RoommateRequestService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receiver user not found with id: " + receiverId));
 
-        // Validation: Prevent duplicate pending requests
+        // Validation: Prevent duplicate pending requests (A→B)
         requestRepository.findBySenderIdAndReceiverIdAndStatus(sender.getId(), receiverId, RequestStatus.PENDING)
                 .ifPresent(existing -> {
                     throw new IllegalStateException("A pending request already exists for this user.");
+                });
+
+        // Validation: Prevent reverse duplicate pending requests (B→A)
+        requestRepository.findBySenderIdAndReceiverIdAndStatus(receiverId, sender.getId(), RequestStatus.PENDING)
+                .ifPresent(existing -> {
+                    throw new IllegalStateException("This user has already sent you a pending request. Check your incoming requests.");
                 });
 
         // Create and save the request
@@ -70,7 +70,7 @@ public class RoommateRequestService {
     //  2. Get Incoming Requests (where I am the receiver)
     // ──────────────────────────────────────────────
     public List<RoommateRequestResponseDTO> getIncomingRequests() {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
         List<RoommateRequest> requests = requestRepository.findByReceiverId(user.getId());
         return requests.stream()
                 .map(RoommateRequestResponseDTO::new)
@@ -81,7 +81,7 @@ public class RoommateRequestService {
     //  3. Get Sent Requests (where I am the sender)
     // ──────────────────────────────────────────────
     public List<RoommateRequestResponseDTO> getSentRequests() {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
         List<RoommateRequest> requests = requestRepository.findBySenderId(user.getId());
         return requests.stream()
                 .map(RoommateRequestResponseDTO::new)
@@ -93,7 +93,7 @@ public class RoommateRequestService {
     // ──────────────────────────────────────────────
     @Transactional
     public RoommateRequestResponseDTO respondToRequest(Long requestId, String status) {
-        User user = getLoggedInUser();
+        User user = authContext.getLoggedInUser();
 
         // Parse the status string into the enum
         RequestStatus newStatus;

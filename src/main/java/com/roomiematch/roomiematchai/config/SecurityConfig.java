@@ -34,7 +34,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Permit all requests to /auth/** and H2 console; require authentication for everything else
+    // Permit public endpoints; require JWT authentication for everything else
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -46,11 +46,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll() // keep H2 accessible for testing
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // keep Swagger accessible
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Allow H2 iframe
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
