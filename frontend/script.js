@@ -132,10 +132,12 @@ function initLoginPage() {
     const password = document.getElementById('password').value;
     setBtnLoading(btn, true);
     try {
-      const res   = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-      const token = res.data || res;
-      if (typeof token === 'string') {
-        setToken(token);
+      const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+      const loginData = res.data || res;
+      if (loginData && loginData.token) {
+        setToken(loginData.token);
+        localStorage.setItem('userId', loginData.userId);
+        localStorage.setItem('userEmail', loginData.email);
         toast('Signed in successfully');
         setTimeout(() => window.location.href = 'dashboard.html', 600);
       } else {

@@ -22,7 +22,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-        ApiResponse<Void> apiResponse = new ApiResponse<>("Forbidden: You don't have permission to access this resource", null);
+        ApiResponse<Void> apiResponse = new ApiResponse<>(false, "Forbidden: You don't have permission to access this resource", null);
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 }

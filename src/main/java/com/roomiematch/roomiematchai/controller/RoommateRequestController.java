@@ -1,6 +1,7 @@
 package com.roomiematch.roomiematchai.controller;
 
 import com.roomiematch.roomiematchai.dto.ApiResponse;
+import com.roomiematch.roomiematchai.dto.RespondRequestDTO;
 import com.roomiematch.roomiematchai.dto.RoommateRequestDTO;
 import com.roomiematch.roomiematchai.dto.RoommateRequestResponseDTO;
 import com.roomiematch.roomiematchai.service.RoommateRequestService;
@@ -10,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/requests")
@@ -64,12 +64,9 @@ public class RoommateRequestController {
     // ──────────────────────────────────────────────
     @PutMapping("/respond")
     public ResponseEntity<ApiResponse<RoommateRequestResponseDTO>> respondToRequest(
-            @RequestBody Map<String, Object> body) {
-        Long requestId = Long.valueOf(body.get("requestId").toString());
-        String status = body.get("status").toString();
-
-        RoommateRequestResponseDTO response = requestService.respondToRequest(requestId, status);
-        return ResponseEntity.ok(new ApiResponse<>("Request " + status.toLowerCase() + " successfully", response));
+            @Valid @RequestBody RespondRequestDTO request) {
+        RoommateRequestResponseDTO response = requestService.respondToRequest(request.getRequestId(), request.getStatus());
+        return ResponseEntity.ok(new ApiResponse<>("Request " + request.getStatus().toLowerCase() + " successfully", response));
     }
 
 }

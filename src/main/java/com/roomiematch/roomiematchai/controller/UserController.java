@@ -1,7 +1,7 @@
 package com.roomiematch.roomiematchai.controller;
 
 import com.roomiematch.roomiematchai.dto.ApiResponse;
-import com.roomiematch.roomiematchai.entity.User;
+import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,10 +22,11 @@ public class UserController {
         this.userService = userService;
     }
 
-    // Retrieves all registered users
+    // Retrieves all registered users (returns DTOs, not raw entities)
     @GetMapping
-    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<UserResponseDTO>>> getAllUsers() {
+        List<UserResponseDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(new ApiResponse<>("Users fetched successfully", users));
     }
 }
+

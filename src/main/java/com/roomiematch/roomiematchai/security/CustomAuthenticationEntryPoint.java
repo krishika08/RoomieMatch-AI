@@ -22,7 +22,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        ApiResponse<Void> apiResponse = new ApiResponse<>("Unauthorized: Please provide a valid token", null);
+        ApiResponse<Void> apiResponse = new ApiResponse<>(false, "Unauthorized: Please provide a valid token", null);
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 }

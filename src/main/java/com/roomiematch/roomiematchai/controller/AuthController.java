@@ -2,6 +2,7 @@ package com.roomiematch.roomiematchai.controller;
 
 import com.roomiematch.roomiematchai.dto.ApiResponse;
 import com.roomiematch.roomiematchai.dto.LoginRequestDTO;
+import com.roomiematch.roomiematchai.dto.LoginResponseDTO;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
 import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.service.AuthService;
@@ -30,8 +31,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequestDTO request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(new ApiResponse<>("Login successful", token));
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(@Valid @RequestBody LoginRequestDTO request) {
+        LoginResponseDTO loginResponse = authService.login(request);
+        return ResponseEntity.ok(new ApiResponse<>("Login successful", loginResponse));
     }
 }
+

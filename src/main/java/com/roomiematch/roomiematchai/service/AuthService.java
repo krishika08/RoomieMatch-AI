@@ -1,6 +1,7 @@
 package com.roomiematch.roomiematchai.service;
 
 import com.roomiematch.roomiematchai.dto.LoginRequestDTO;
+import com.roomiematch.roomiematchai.dto.LoginResponseDTO;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
 import com.roomiematch.roomiematchai.dto.UserResponseDTO;
 import com.roomiematch.roomiematchai.entity.User;
@@ -50,7 +51,7 @@ public class AuthService {
         return new UserResponseDTO(savedUser.getId(), savedUser.getEmail());
     }
 
-    public String login(LoginRequestDTO request) {
+    public LoginResponseDTO login(LoginRequestDTO request) {
         log.info("AuthService: Login attempt for email: {}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -64,6 +65,8 @@ public class AuthService {
         log.info("AuthService: Successful login for email: {}", request.getEmail());
         
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
-        return jwtUtil.generateToken(userDetails);
+        String token = jwtUtil.generateToken(userDetails);
+
+        return new LoginResponseDTO(token, user.getId(), user.getEmail());
     }
 }
