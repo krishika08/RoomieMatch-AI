@@ -1,20 +1,32 @@
 /* ═══════════════════════════════════════════════════
    RoomieMatch AI — script.js
+   Backend API contracts:
+     POST /auth/signup  → ApiResponse<UserResponseDTO>
+     POST /auth/login   → ApiResponse<LoginResponseDTO>  { token, userId, email }
+     GET  /profile      → ApiResponse<StudentProfileResponseDTO>
+     POST /profile      → ApiResponse<StudentProfileResponseDTO>
+     PUT  /profile      → ApiResponse<StudentProfileResponseDTO>
+     GET  /matches      → ApiResponse<List<MatchResponseDTO>>
+     POST /requests/send     { receiverId }
+     GET  /requests/incoming → ApiResponse<List<RoommateRequestResponseDTO>>
+     GET  /requests/sent     → ApiResponse<List<RoommateRequestResponseDTO>>
+     PUT  /requests/respond  { requestId, status }
    ═══════════════════════════════════════════════════ */
 
 const API = 'http://localhost:8080';
 
-// ── AOS ───────────────────────────────────────────
+/* ── AOS ──────────────────────────────────────────── */
 if (typeof AOS !== 'undefined') {
-  AOS.init({ once: true, duration: 400, easing: 'ease-out-quad' });
+  AOS.init({ once: true, duration: 450, easing: 'ease-out-quad', offset: 40 });
 }
 
-// ── Token ─────────────────────────────────────────
-const getToken   = () => localStorage.getItem('jwt');
-const setToken   = (t) => localStorage.setItem('jwt', t);
-const clearToken = () => localStorage.removeItem('jwt');
+/* ── Storage helpers ──────────────────────────────── */
+const getToken     = ()  => localStorage.getItem('jwt');
+const setToken     = (t) => localStorage.setItem('jwt', t);
+const clearToken   = ()  => localStorage.removeItem('jwt');
+const getUserEmail = ()  => localStorage.getItem('userEmail') || '';
 
-// ── Toast ─────────────────────────────────────────
+/* ── Toast ────────────────────────────────────────── */
 function toast(msg, type = 'success') {
   let stack = document.querySelector('.toast-stack');
   if (!stack) {
@@ -22,19 +34,15 @@ function toast(msg, type = 'success') {
     stack.className = 'toast-stack';
     document.body.appendChild(stack);
   }
-  const icons = {
-    success: 'fa-circle-check',
-    error:   'fa-circle-exclamation',
-    info:    'fa-circle-info',
-  };
+  const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
   const el = document.createElement('div');
   el.className = `toast-item ${type}`;
   el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} fa-sm"></i><span>${msg}</span>`;
   stack.appendChild(el);
-  setTimeout(() => el.remove(), 3500);
+  setTimeout(() => el.remove(), 3800);
 }
 
-// ── API helper ────────────────────────────────────
+/* ── API helper ───────────────────────────────────── */
 async function api(endpoint, options = {}) {
   const token = getToken();
   const headers = {
@@ -43,27 +51,28 @@ async function api(endpoint, options = {}) {
     ...options.headers,
   };
   try {
-    const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+    const res  = await fetch(`${API}${endpoint}`, { ...options, headers });
     if (res.status === 401) {
       clearToken();
       window.location.href = 'index.html';
       throw new Error('Session expired');
     }
     const ct   = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json() : await res.text();
+    const body = ct.includes('application/json') ? await res.json() : await res.text();
     if (!res.ok) {
-      const msg = (typeof data === 'object' && data.message) ? data.message
-                : (typeof data === 'string' && data) ? data : 'Something went wrong';
+      const msg = (body && body.message) ? body.message
+                : (typeof body === 'string' && body) ? body
+                : 'Something went wrong';
       throw new Error(msg);
     }
-    return data;
+    return body;  // always the full ApiResponse object { success, message, data }
   } catch (err) {
     if (!err.message.includes('Session expired')) toast(err.message, 'error');
     throw err;
   }
 }
 
-// ── Auth guard ────────────────────────────────────
+/* ── Auth guard ───────────────────────────────────── */
 function checkAuth() {
   const path     = window.location.pathname;
   const isPublic = ['index.html', 'signup.html'].some(p => path.endsWith(p)) || path.endsWith('/');
@@ -75,73 +84,75 @@ function checkAuth() {
 
 function logout() {
   clearToken();
+  localStorage.removeItem('userId');
+  localStorage.removeItem('userEmail');
   window.location.href = 'index.html';
 }
 
-// ── Sidebar setup ─────────────────────────────────
+/* ── Sidebar ──────────────────────────────────────── */
 function initSidebar() {
   document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); logout(); });
-  try {
-    const token = getToken();
-    if (token) {
-      const payload  = JSON.parse(atob(token.split('.')[1]));
-      const email    = payload.sub || payload.email || 'user';
-      const initials = email.substring(0, 2).toUpperCase();
-      const av = document.getElementById('sidebarAvatar');
-      const em = document.getElementById('sidebarEmail');
-      if (av) av.textContent = initials;
-      if (em) em.textContent = email;
-    }
-  } catch (_) {}
+  const email    = getUserEmail();
+  const initials = email ? email.substring(0, 2).toUpperCase() : 'U';
+  const av = document.getElementById('sidebarAvatar');
+  const em = document.getElementById('sidebarEmail');
+  if (av) av.textContent = initials;
+  if (em) em.textContent = email || 'user@app.com';
 }
 
-// ── Button loading ────────────────────────────────
-function setBtnLoading(btn, loading, originalHTML) {
+/* ── Button loading ───────────────────────────────── */
+function setBtnLoading(btn, loading) {
   if (!btn) return;
   btn.disabled = loading;
   if (loading) {
     btn.dataset.orig = btn.innerHTML;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Loading…`;
   } else {
-    btn.innerHTML = originalHTML || btn.dataset.orig || 'Submit';
+    btn.innerHTML = btn.dataset.orig || 'Submit';
   }
 }
 
-// ── Boot ──────────────────────────────────────────
+/* ── Boot ─────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   if (!checkAuth()) return;
   if (typeof AOS !== 'undefined') AOS.refresh();
   initSidebar();
   initLoginPage();
   initSignupPage();
+  initDashboardPage();
   initProfilePage();
   initMatchesPage();
   initRequestsPage();
 });
 
-// ─────────────────────────────────────────────────
-// PAGE: Login
-// ─────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════
+   PAGE: Login
+   ════════════════════════════════════════════════════ */
 function initLoginPage() {
   const form = document.getElementById('loginForm');
   if (!form) return;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('loginBtn');
+    const btn      = document.getElementById('loginBtn');
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
+
+    if (!email || !password) { toast('Please fill in all fields.', 'error'); return; }
+
     setBtnLoading(btn, true);
     try {
+      // Response: ApiResponse<LoginResponseDTO>  → { success, message, data: { token, userId, email } }
       const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-      const loginData = res.data || res;
-      if (loginData && loginData.token) {
-        setToken(loginData.token);
-        localStorage.setItem('userId', loginData.userId);
-        localStorage.setItem('userEmail', loginData.email);
-        toast('Signed in successfully');
-        setTimeout(() => window.location.href = 'dashboard.html', 600);
+      const d   = res.data;
+      if (d && d.token) {
+        setToken(d.token);
+        localStorage.setItem('userId', d.userId);
+        localStorage.setItem('userEmail', d.email);
+        toast('Welcome back, ' + d.email + '!');
+        setTimeout(() => window.location.href = 'dashboard.html', 700);
       } else {
-        throw new Error('Invalid server response');
+        throw new Error('Unexpected response from server.');
       }
     } catch (_) {
       setBtnLoading(btn, false);
@@ -149,17 +160,22 @@ function initLoginPage() {
   });
 }
 
-// ─────────────────────────────────────────────────
-// PAGE: Signup
-// ─────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════
+   PAGE: Signup
+   ════════════════════════════════════════════════════ */
 function initSignupPage() {
   const form = document.getElementById('signupForm');
   if (!form) return;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn      = document.getElementById('signupBtn');
     const email    = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
+
+    if (!email || !password) { toast('Please fill in all fields.', 'error'); return; }
+    if (password.length < 8) { toast('Password must be at least 8 characters.', 'error'); return; }
+
     setBtnLoading(btn, true);
     try {
       await api('/auth/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
@@ -171,51 +187,83 @@ function initSignupPage() {
   });
 }
 
-// ─────────────────────────────────────────────────
-// PAGE: Profile
-// ─────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════
+   PAGE: Dashboard
+   ════════════════════════════════════════════════════ */
+function initDashboardPage() {
+  const el = document.getElementById('dashEmail');
+  if (!el) return;
+  el.textContent = getUserEmail() || 'there';
+}
+
+/* ════════════════════════════════════════════════════
+   PAGE: Profile
+   ════════════════════════════════════════════════════ */
 function initProfilePage() {
   const form = document.getElementById('profileForm');
   if (!form) return;
 
-  const FIELDS = ['sleepSchedule','cleanlinessLevel','noiseTolerance','socialLevel',
-                  'studyHabits','guestFrequency','roomTemperature'];
-  let exists = false;
+  const FIELDS = ['sleepSchedule', 'cleanlinessLevel', 'noiseTolerance',
+                  'socialLevel', 'studyHabits', 'guestFrequency', 'roomTemperature'];
+  let profileExists = false;
 
+  const statusEl = document.getElementById('profileStatus');
+  if (statusEl) statusEl.textContent = 'Loading your preferences…';
+
+  // Load existing profile
   (async () => {
     try {
       const res     = await api('/profile');
-      const profile = res.data || res;
+      const profile = res.data;
       if (profile && typeof profile === 'object') {
-        exists = true;
+        profileExists = true;
         FIELDS.forEach(f => {
           const el = document.getElementById(f);
           if (el && profile[f]) el.value = profile[f];
         });
+        if (statusEl) {
+          statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Preferences loaded`;
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      if (statusEl) statusEl.textContent = 'No profile yet — fill in your preferences below.';
+    }
   })();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn     = document.getElementById('saveProfileBtn');
+    const btn = document.getElementById('saveProfileBtn');
+
+    // Validate all fields filled
     const payload = {};
-    FIELDS.forEach(f => { payload[f] = document.getElementById(f)?.value; });
+    let missing = false;
+    FIELDS.forEach(f => {
+      const val = document.getElementById(f)?.value;
+      if (!val) missing = true;
+      payload[f] = val;
+    });
+    if (missing) { toast('Please fill in all preferences.', 'error'); return; }
+
     setBtnLoading(btn, true);
     try {
-      await api('/profile', { method: exists ? 'PUT' : 'POST', body: JSON.stringify(payload) });
-      exists = true;
-      toast('Preferences saved!');
+      const method = profileExists ? 'PUT' : 'POST';
+      await api('/profile', { method, body: JSON.stringify(payload) });
+      profileExists = true;
+      toast('Preferences saved successfully!');
+      if (statusEl) {
+        statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Preferences saved`;
+      }
     } catch (_) {
+      // error already shown by api()
     } finally {
       setBtnLoading(btn, false);
     }
   });
 }
 
-// ─────────────────────────────────────────────────
-// PAGE: Matches
-// ─────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════
+   PAGE: Matches
+   ════════════════════════════════════════════════════ */
 function initMatchesPage() {
   if (!document.getElementById('matchesContainer')) return;
   loadMatches();
@@ -224,23 +272,25 @@ function initMatchesPage() {
 
 async function loadMatches() {
   const c = document.getElementById('matchesContainer');
+  if (!c) return;
   c.innerHTML = `<div class="col-12"><div class="spinner-wrap"><div class="spinner-ring"></div></div></div>`;
   try {
     const res     = await api('/matches');
-    const matches = res.data || res;
+    const matches = res.data;
 
     if (!Array.isArray(matches) || !matches.length) {
-      c.innerHTML = emptyCard('No Matches Found', 'Complete your profile so the AI engine can find compatible roommates.');
+      c.innerHTML = emptyCard('No Matches Found',
+        'Complete your profile so the AI engine can find compatible roommates for you.');
       return;
     }
 
     c.innerHTML = matches.map((m, i) => {
       const score = m.compatibilityScore || 0;
       const sc    = score >= 80 ? 'score-high' : score >= 50 ? 'score-medium' : 'score-low';
-      const slbl  = score >= 80 ? 'High match' : score >= 50 ? 'Good match' : 'Fair match';
+      const slbl  = score >= 80 ? 'High match'  : score >= 50 ? 'Good match'   : 'Fair match';
+      const fc    = score >= 80 ? 'fill-high'   : score >= 50 ? 'fill-medium'  : 'fill-low';
       const init  = (m.email || 'U').substring(0, 2).toUpperCase();
-      const delay = (i % 6) * 60;
-
+      const delay = (i % 6) * 70;
       return `
       <div class="col-md-6 col-xl-4" data-aos="fade-up" data-aos-delay="${delay}">
         <div class="card match-card h-100">
@@ -253,10 +303,18 @@ async function loadMatches() {
               </div>
             </div>
             <span class="score-pill ${sc}">
-              <i class="fa-solid fa-star fa-xs"></i> ${score}% &middot; ${slbl}
+              <i class="fa-solid fa-star fa-xs"></i> ${score}%
             </span>
           </div>
           <div class="divider"></div>
+          <div style="padding:12px 18px 4px;">
+            <div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Compatibility</div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-bg"><div class="score-bar-fill ${fc}" style="width:${score}%"></div></div>
+            </div>
+            <div style="font-size:11.5px;color:var(--text-3);text-align:right;margin-top:2px;">${slbl}</div>
+          </div>
+          <div class="divider" style="margin-top:8px;"></div>
           <div class="traits">
             <div class="trait"><div class="t-label">Sleep</div><div class="t-value">${fmt(m.sleepSchedule)}</div></div>
             <div class="trait"><div class="t-label">Cleanliness</div><div class="t-value">${fmt(m.cleanlinessLevel)}</div></div>
@@ -266,29 +324,39 @@ async function loadMatches() {
             <div class="trait"><div class="t-label">Guests</div><div class="t-value">${fmt(m.guestFrequency)}</div></div>
           </div>
           <div class="divider"></div>
-          <button class="btn btn-primary btn-sm" onclick="sendRequest(${m.userId})">
-            <i class="fa-solid fa-paper-plane fa-xs"></i> Send request
-          </button>
+          <div style="padding:14px 18px 18px;">
+            <button id="req-btn-${m.userId}" class="btn btn-primary btn-sm w-full"
+                    onclick="sendRequest(${m.userId}, this)">
+              <i class="fa-solid fa-paper-plane fa-xs"></i> Send Request
+            </button>
+          </div>
         </div>
       </div>`;
     }).join('');
 
     if (typeof AOS !== 'undefined') AOS.refresh();
   } catch (_) {
-    c.innerHTML = emptyCard('Could Not Load Matches', 'Make sure your profile is saved and the backend is running.');
+    c.innerHTML = emptyCard('Could Not Load Matches',
+      'Make sure your profile is saved and the backend is running.');
   }
 }
 
-window.sendRequest = async (receiverId) => {
+window.sendRequest = async (receiverId, btn) => {
+  const orig = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`; }
   try {
+    // POST /requests/send  body: { receiverId }
     await api('/requests/send', { method: 'POST', body: JSON.stringify({ receiverId }) });
-    toast('Request sent!');
-  } catch (_) {}
+    toast('Roommate request sent!');
+    if (btn) { btn.innerHTML = `<i class="fa-solid fa-check fa-xs"></i> Sent`; btn.style.background = 'var(--success)'; }
+  } catch (_) {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
 };
 
-// ─────────────────────────────────────────────────
-// PAGE: Requests
-// ─────────────────────────────────────────────────
+/* ════════════════════════════════════════════════════
+   PAGE: Requests
+   ════════════════════════════════════════════════════ */
 function initRequestsPage() {
   if (!document.getElementById('requestsContainer')) return;
 
@@ -305,10 +373,11 @@ function initRequestsPage() {
 
 async function loadIncoming() {
   const c = document.getElementById('requestsContainer');
+  if (!c) return;
   c.innerHTML = `<div class="spinner-wrap"><div class="spinner-ring"></div></div>`;
   try {
     const res  = await api('/requests/incoming');
-    const reqs = res.data || res;
+    const reqs = res.data;
 
     if (!Array.isArray(reqs) || !reqs.length) {
       c.innerHTML = emptyCard('No Incoming Requests', 'When someone sends you a request, it will appear here.');
@@ -316,24 +385,24 @@ async function loadIncoming() {
     }
 
     c.innerHTML = reqs.map((r, i) => {
-      const init  = (r.senderEmail || 'U').substring(0, 2).toUpperCase();
-      const bc    = badgeClass(r.status);
-      const pend  = r.status === 'PENDING';
+      const init = (r.senderEmail || 'U').substring(0, 2).toUpperCase();
+      const bc   = badgeClass(r.status);
+      const pend = r.status === 'PENDING';
       return `
-      <div class="req-card" data-aos="fade-up" data-aos-delay="${i * 50}">
+      <div class="req-card" data-aos="fade-up" data-aos-delay="${i * 60}">
         <div class="req-left">
           <div class="req-avatar">${init}</div>
           <div>
             <div class="req-name">${r.senderEmail || 'User #' + r.senderId}</div>
-            <div class="req-meta">Request #${r.id} &nbsp;&middot;&nbsp; <span class="badge ${bc}">${r.status}</span></div>
+            <div class="req-meta">Request #${r.id} &nbsp;·&nbsp; <span class="badge ${bc}">${r.status}</span></div>
           </div>
         </div>
         ${pend ? `
         <div class="req-actions">
-          <button class="btn btn-success btn-sm" onclick="respond(${r.id},'ACCEPTED')">
+          <button class="btn btn-success btn-sm" onclick="respond(${r.id}, 'ACCEPTED', this)">
             <i class="fa-solid fa-check fa-xs"></i> Accept
           </button>
-          <button class="btn btn-danger btn-sm" onclick="respond(${r.id},'REJECTED')">
+          <button class="btn btn-danger btn-sm" onclick="respond(${r.id}, 'REJECTED', this)">
             <i class="fa-solid fa-xmark fa-xs"></i> Decline
           </button>
         </div>` : ''}
@@ -348,10 +417,11 @@ async function loadIncoming() {
 
 async function loadSent() {
   const c = document.getElementById('requestsContainer');
+  if (!c) return;
   c.innerHTML = `<div class="spinner-wrap"><div class="spinner-ring"></div></div>`;
   try {
     const res  = await api('/requests/sent');
-    const reqs = res.data || res;
+    const reqs = res.data;
 
     if (!Array.isArray(reqs) || !reqs.length) {
       c.innerHTML = emptyCard('No Sent Requests', "You haven't sent any requests yet. Browse your matches!");
@@ -362,12 +432,12 @@ async function loadSent() {
       const init = (r.receiverEmail || 'U').substring(0, 2).toUpperCase();
       const bc   = badgeClass(r.status);
       return `
-      <div class="req-card" data-aos="fade-up" data-aos-delay="${i * 50}">
+      <div class="req-card" data-aos="fade-up" data-aos-delay="${i * 60}">
         <div class="req-left">
-          <div class="req-avatar" style="background:var(--primary-light);color:var(--primary);border-color:rgba(79,70,229,0.2);">${init}</div>
+          <div class="req-avatar" style="background:var(--primary-light);color:var(--primary);border-color:rgba(99,102,241,0.3);">${init}</div>
           <div>
             <div class="req-name">To: ${r.receiverEmail || 'User #' + r.receiverId}</div>
-            <div class="req-meta">Request #${r.id} &nbsp;&middot;&nbsp; <span class="badge ${bc}">${r.status}</span></div>
+            <div class="req-meta">Request #${r.id} &nbsp;·&nbsp; <span class="badge ${bc}">${r.status}</span></div>
           </div>
         </div>
       </div>`;
@@ -379,15 +449,25 @@ async function loadSent() {
   }
 }
 
-window.respond = async (requestId, status) => {
+// PUT /requests/respond  body: { requestId, status }
+window.respond = async (requestId, status, btn) => {
+  if (btn) { btn.disabled = true; }
   try {
-    await api('/requests/respond', { method: 'PUT', body: JSON.stringify({ requestId, status }) });
-    toast(status === 'ACCEPTED' ? 'Request accepted!' : 'Request declined.', status === 'ACCEPTED' ? 'success' : 'info');
+    await api('/requests/respond', {
+      method: 'PUT',
+      body: JSON.stringify({ requestId, status })
+    });
+    toast(
+      status === 'ACCEPTED' ? 'Request accepted!' : 'Request declined.',
+      status === 'ACCEPTED' ? 'success' : 'info'
+    );
     loadIncoming();
-  } catch (_) {}
+  } catch (_) {
+    if (btn) { btn.disabled = false; }
+  }
 };
 
-// ── Helpers ───────────────────────────────────────
+/* ── Helpers ──────────────────────────────────────── */
 function fmt(val) {
   if (!val) return '—';
   return val.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase());
