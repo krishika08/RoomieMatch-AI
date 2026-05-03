@@ -484,7 +484,7 @@ uploadBtn?.addEventListener('click', async () => {
 
   try {
     const token = getToken();
-    const resp = await fetch(API_BASE + '/manager/upload-students', {
+    const resp = await fetch(API + '/manager/upload-students', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token },
       body: formData

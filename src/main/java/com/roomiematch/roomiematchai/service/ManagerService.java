@@ -7,6 +7,7 @@ import com.roomiematch.roomiematchai.dto.WardenAssignDTO;
 import com.roomiematch.roomiematchai.entity.*;
 import com.roomiematch.roomiematchai.exception.DuplicateEmailException;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
+import com.roomiematch.roomiematchai.repository.RoomAssignmentRepository;
 import com.roomiematch.roomiematchai.repository.RoommateRequestRepository;
 import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
@@ -35,17 +36,20 @@ public class ManagerService {
 
     private final UserRepository userRepository;
     private final RoommateRequestRepository requestRepository;
+    private final RoomAssignmentRepository roomAssignmentRepository;
     private final StudentProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthContextService authContext;
 
     public ManagerService(UserRepository userRepository,
                           RoommateRequestRepository requestRepository,
+                          RoomAssignmentRepository roomAssignmentRepository,
                           StudentProfileRepository profileRepository,
                           PasswordEncoder passwordEncoder,
                           AuthContextService authContext) {
         this.userRepository = userRepository;
         this.requestRepository = requestRepository;
+        this.roomAssignmentRepository = roomAssignmentRepository;
         this.profileRepository = profileRepository;
         this.passwordEncoder = passwordEncoder;
         this.authContext = authContext;
@@ -257,11 +261,30 @@ public class ManagerService {
             throw new IllegalStateException("Cannot assign roommates from different hostels.");
         }
 
+        // Check if either user is already in a finalized assignment
+        if (roomAssignmentRepository.isUserAssigned(userId1)) {
+            throw new IllegalStateException("User " + userId1 + " is already assigned to a room.");
+        }
+        if (roomAssignmentRepository.isUserAssigned(userId2)) {
+            throw new IllegalStateException("User " + userId2 + " is already assigned to a room.");
+        }
+
+        // Create the roommate request record
         RoommateRequest request = new RoommateRequest();
         request.setSender(user1);
         request.setReceiver(user2);
         request.setStatus(RequestStatus.ACCEPTED);
         RoommateRequest saved = requestRepository.save(request);
+
+        // Create the final room assignment (locks both users)
+        RoomAssignment assignment = new RoomAssignment();
+        assignment.setUser1(user1);
+        assignment.setUser2(user2);
+        assignment.setHostel(user1.getHostel());
+        assignment.setAssignedBy(manager);
+        assignment.setStatus(AssignmentStatus.ASSIGNED);
+        roomAssignmentRepository.save(assignment);
+        log.info("Room assignment created for users {} and {} in {}", userId1, userId2, user1.getHostel());
 
         return new RoommateRequestResponseDTO(saved);
     }

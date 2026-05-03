@@ -47,6 +47,8 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Cleaning database via native queries for hierarchical system migration...");
         try {
             // Using native queries to avoid JPA mapping issues with old enum values like 'USER'
+            // Clear room_assignments first (FK refs to users)
+            try { jdbcTemplate.execute("DELETE FROM room_assignments"); } catch (Exception ignored) {}
             userRepository.clearRequests();
             userRepository.clearProfiles();
             userRepository.alterRoleColumn();

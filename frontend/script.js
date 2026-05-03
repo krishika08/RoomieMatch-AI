@@ -355,12 +355,13 @@ async function loadMatches() {
           </div>
           <div class="divider" style="margin-top:8px;"></div>
           <div class="traits">
-            <div class="trait"><div class="t-label">Sleep</div><div class="t-value">${fmt(m.sleepSchedule)}</div></div>
-            <div class="trait"><div class="t-label">Cleanliness</div><div class="t-value">${fmt(m.cleanlinessLevel)}</div></div>
-            <div class="trait"><div class="t-label">Noise</div><div class="t-value">${fmt(m.noiseTolerance)}</div></div>
-            <div class="trait"><div class="t-label">Social</div><div class="t-value">${fmt(m.socialLevel)}</div></div>
-            <div class="trait"><div class="t-label">Study</div><div class="t-value">${fmt(m.studyHabits)}</div></div>
-            <div class="trait"><div class="t-label">Guests</div><div class="t-value">${fmt(m.guestFrequency)}</div></div>
+            ${traitRow('Sleep', m.sleepSchedule, m.breakdown, 'sleepSchedule', 20)}
+            ${traitRow('Cleanliness', m.cleanlinessLevel, m.breakdown, 'cleanliness', 20)}
+            ${traitRow('Noise', m.noiseTolerance, m.breakdown, 'noiseTolerance', 15)}
+            ${traitRow('Social', m.socialLevel, m.breakdown, 'socialLevel', 15)}
+            ${traitRow('Study', m.studyHabits, m.breakdown, 'studyHabits', 15)}
+            ${traitRow('Guests', m.guestFrequency, m.breakdown, 'guestFrequency', 10)}
+            ${traitRow('Temp', m.roomTemperature, m.breakdown, 'roomTemperature', 5)}
           </div>
           <div class="divider"></div>
           <div style="padding:14px 18px 18px;">
@@ -507,6 +508,22 @@ window.respond = async (requestId, status, btn) => {
 };
 
 /* ── Helpers ──────────────────────────────────────── */
+/** Renders a single trait row with preference value + per-trait score mini-bar */
+function traitRow(label, value, breakdown, key, max) {
+  const earned = (breakdown && breakdown[key] != null) ? breakdown[key] : null;
+  const pct = earned !== null ? Math.round((earned / max) * 100) : null;
+  const barColor = pct === null ? '' : pct >= 80 ? 'var(--success)' : pct >= 50 ? '#f59e0b' : 'var(--error)';
+  const scoreHtml = pct !== null
+    ? `<div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+         <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+           <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
+         </div>
+         <span style="font-size:10px;color:var(--text-3);min-width:28px;text-align:right;">${earned}/${max}</span>
+       </div>`
+    : '';
+  return `<div class="trait"><div class="t-label">${label}</div><div class="t-value">${fmt(value)}${scoreHtml}</div></div>`;
+}
+
 function fmt(val) {
   if (!val) return '—';
   return val.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase());
