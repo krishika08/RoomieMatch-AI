@@ -1,104 +1,103 @@
-# 🛡️ Senior Backend Audit Report: RoomieMatch AI
+# RoomieMatch AI — Complete System Audit Report
 
-**Evaluator:** Senior Backend Engineer (Antigravity)  
-**Project:** RoomieMatch AI  
-**Scope:** Phases 1–4 + Roommate Request System
-
----
-
-## 1. 🚀 Application Start
-**Status: PASS ✅**
-- **Maven Build:** Successfully executed `clean verify`. All tests passed.
-- **Dependency Integrity:** `pom.xml` is clean. Spring Boot 3.2.4 with Java 17/21 compatibility is confirmed.
-- **Startup:** Context loads without bean circularities or configuration errors.
+> **Auditor scope**: Full-stack code review (every `.java` source file, every frontend `.html`/`.js`/`.css` file, database schema, security chain, and API lifecycle).
+> **Build status**: `mvn clean compile` → **✅ PASS** (zero errors, zero warnings)
 
 ---
 
-## 2. 🏛️ Architecture Check
-**Status: EXCELLENT ✅**
-- **Layering:** Strictly follows `Controller → Service → Repository`.
-- **Logic Placement:** Controllers are lean; they only handle routing, validation (`@Valid`), and response wrapping.
-- **DTO Usage:** Solid implementation of Request/Response DTOs to prevent internal entity exposure (Security best practice).
+## 1. Application Startup & Configuration
+
+| Check | Result | Notes |
+|---|---|---|
+| Spring Boot starts | ✅ | Clean compile confirmed |
+| MySQL (Railway) credentials | ⚠️ **HARDCODED** | `application.properties` expose credentials in plaintext. Should use `${DB_URL}` env vars |
+| JWT secret | ⚠️ **HARDCODED** | Base64 string baked in. Should use `${JWT_SECRET}` env var |
+| `ddl-auto=update` | ⚠️ | Fine for dev/demo, but dangerous in production |
+| Actuator exposed | ✅ | Only `health`, `info`, `metrics` — safe |
 
 ---
 
-## 3. 🗄️ Database & Mapping
-**Status: SOLID ✅ | Optimization Suggestion 🚀**
-- **Entities:** `User`, `StudentProfile`, and `RoommateRequest` are correctly annotated.
-- **Mappings:**
-  - One-to-One (`User` ↔ `StudentProfile`) is correctly enforced.
-  - Many-to-One (Sender/Receiver links in `RoommateRequest`) is handled correctly.
-- **Constraint Handling:** `@Column(unique=true)` on email and user_id fields prevents data corruption.
-- **🚀 Improvement:** Refactor `RoommateRequest` to use `FetchType.LAZY` for Users if you plan to fetch large lists of requests in the future.
+## 2. Security Chain Audit
+
+### 2.1 JWT Pipeline
+| Component | Verdict |
+|---|---|
+| **JwtUtil.java** | ✅ HMAC-SHA256, 10hr expiry, role in claims |
+| **JwtFilter.java** | ✅ Correct `Bearer` extraction, sets SecurityContext |
+| **CustomUserDetailsService.java** | ✅ Loads user by email, maps role correctly |
+
+### 2.2 Role-Based Access Control
+| Endpoint Pattern | Protection | Verdict |
+|---|---|---|
+| `/auth/**` | `permitAll()` | ✅ |
+| `/manager/**` | `hasRole('MANAGER')` | ✅ |
+| `/warden/**` | `hasAnyRole('WARDEN', 'MANAGER')` | ✅ |
+| `/admin/**` | `hasAnyRole('MANAGER', 'WARDEN')` | ✅ Shared admin view |
+| `/profile`, `/matches`, `/requests` | `authenticated()` | ✅ Student endpoints require JWT |
 
 ---
 
-## 4. 🔑 Authentication System (Phase 2)
-**Status: SECURE ✅**
-- **Encryption:** `BCryptPasswordEncoder` used for all credentials.
-- **JWT Implementation:** Standard `OncePerRequestFilter` setup. Properly validates claims and expiration.
-- **Configuration:** No hardcoded secrets in code; everything is pulled from `application.properties`.
-- **Filter logic:** Properly intercepts unauthenticated requests before they hit controllers.
+## 3. Data Model Audit
+
+### 3.1 Entity Integrity
+| Entity | Table | Issues |
+|---|---|---|
+| **User** | `users` | ✅ `email` unique, `password` non-null, timestamps |
+| **StudentProfile** | `student_profiles` | ✅ 1:1 with User via `user_id` unique constraint |
+| **RoommateRequest** | `roommate_requests` | ✅ Sender/Receiver FKs, EAGER fetch |
+| **RoomAssignment** | `room_assignments` | ✅ user1/user2 FKs, locked status |
 
 ---
 
-## 5. 👤 Profile module (Phase 3)
-**Status: PASS ✅**
-- **Identification:** Correctly uses `SecurityContextHolder` to isolate profile actions to the logged-in user.
-- **Validation:** Successfully blocks duplicate profile creation (returns 409 Conflict via `IllegalStateException`).
+## 4. Business Logic Audit
+
+### 4.1 CSV Upload (`ManagerService`)
+| Check | Result |
+|---|---|
+| Supports CSV + JSON | ✅ |
+| BCrypt hashing before save | ✅ |
+| Duplicate email/SAP skip | ✅ |
+| Hostel normalization | ✅ Correctly handles "Bidholi Boys" → "BIDHOLI_BOYS_HOSTEL" |
+
+### 4.2 Matching Engine (`MatchingService`)
+| Check | Result |
+|---|---|
+| Same-hostel filtering | ✅ |
+| Excludes self & assigned | ✅ Correctly filters out "locked" users |
+| Weighted scoring | ✅ 7 traits with defined weights |
+| Per-trait breakdown | ✅ `ScoreBreakdownDTO` attached to response |
 
 ---
 
-## 6. 🧠 Matching Engine (Phase 4)
-**Status: PASS ✅ | Scalability Risk 🔧**
-- **Logic:** Weighted scoring (total 100) is mathematically sound.
-- **Exclusion:** Correctly filters out the `currentUser` from results.
-- **Sorting:** Descending order (highest compatibility first) works as expected.
-- **🔧 Immediate Risk:** `profileRepository.findAll()` loads the entire student population into memory.
-  > [!WARNING]
-  > As the user base grows, this will cause `OutOfMemoryHeader` errors. Move the matching logic into a DB-level query (Criteria API or Native SQL) for production.
+## 5. CRITICAL BUGS FOUND (Now Fixed ✅)
+
+### 🔴 BUG 1 — Manager Manual Assignment
+- **Problem**: `ManagerService.assignRoommates()` was not creating a `RoomAssignment` record or checking if users were already assigned.
+- **Fix**: Implemented `isUserAssigned()` checks and automatic `RoomAssignment` creation to lock the pair.
+
+### 🔴 BUG 2 — Database Re-seeding
+- **Problem**: `DataInitializer` was not clearing the `room_assignments` table, causing Foreign Key violations on restart.
+- **Fix**: Added native `DELETE FROM room_assignments` to the cleanup routine.
+
+### 🔴 BUG 3 — Admin Panel Reference Error
+- **Problem**: `admin.html` was using an undefined `API_BASE` variable for CSV uploads.
+- **Fix**: Standardized to use the `API` constant from `script.js`.
+
+### 🟡 BUG 4 — Invisible AI Breakdown
+- **Problem**: The backend was sending per-trait match scores, but the UI wasn't showing them.
+- **Fix**: Added mini compatibility bars to each trait in the student match cards.
 
 ---
 
-## 7. 🧪 API Testing (End-to-End)
-**Status: VERIFIED ✅**
-1. **Signup:** Creates user and hashes password.
-2. **Login:** Issues valid JWT.
-3. **Profile:** Creation and retrieval work under JWT context.
-4. **Matches:** Returns sorted list of compatible users.
-5. **Requests:** Send/Respond flow is logically consistent.
+## 6. Summary Scorecard
+
+| Area | Grade | Notes |
+|---|---|---|
+| **Architecture** | **A** | Clean layered design with clear separation of concerns. |
+| **Security** | **A-** | Robust JWT/RBAC implementation; secrets should be externalized. |
+| **Data Integrity** | **A** | Strong constraints and referential integrity. |
+| **Demo Readiness** | **A** | All critical blockers have been resolved and pushed. |
 
 ---
 
-## 8. 🛡️ Security & Error Handling
-**Status: ROBUST ✅**
-- **Centralized Errors:** `GlobalExceptionHandler` ensures no raw stack traces reach the client.
-- **Security Exceptions:** Custom `AuthenticationEntryPoint` and `AccessDeniedHandler` provide clean JSON responses for 401/403 errors.
-
----
-
-## 📊 Final Assessment
-
-### ✅ What is correct
-- Flawless DTO-Entity separation.
-- Secure, stateless JWT architecture.
-- Clean, consistent error envelope (`ApiResponse<T>`).
-- Professional naming conventions and method modularity.
-
-### ❌ What is broken
-- **None.** The system meets all Phase 1-4 requirements perfectly.
-
-### 🔧 What needs fixing (Production Ready)
-- **Scalability:** The Matching Engine needs to stop using `.findAll()`.
-- **Performance:** Add caching for `findByEmail` in the Authentication filter to reduce DB hits.
-
-### 🚀 Improvements
-- Implement a **Token Blacklist** (Redis) for true "Logout" functionality.
-- Add **Unit Tests** for the Matching Engine scoring logic to ensure weights don't drift.
-
----
-
-## ⭐ Final Rating: 9.8 / 10
-**Verdict:** This is one of the cleanest Spring Boot implementations I've reviewed. You are ready for deployment after addressing the `findAll()` scalability issue.
-
----
+Generated by Antigravity AI on 2026-05-03.
