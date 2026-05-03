@@ -4,178 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — RoomieMatch AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-mesh: #f0f4ff;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --white: #ffffff;
-            --radius-lg: 24px;
-            --radius-md: 12px;
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --primary: #3B82F6;
+            --primary-hover: #2563EB;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --border-focus: #BFDBFE;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
         body, html {
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-mesh);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
-            height: 100vh;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .app-container {
-            display: flex;
-            width: 1000px;
-            height: 640px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Side Branding */
-        .side-branding {
-            flex: 1;
-            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-            padding: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            color: white;
-            position: relative;
+        .auth-wrapper {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .side-branding::after {
-            content: '';
-            position: absolute;
-            bottom: -50px;
-            right: -50px;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
+        .auth-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        .logo {
+        .auth-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .brand {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
-            font-weight: 700;
-            font-size: 20px;
-            letter-spacing: -0.02em;
-        }
-
-        .logo-icon {
-            background: white;
-            color: var(--primary);
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .branding-content h1 {
-            font-size: 42px;
-            font-weight: 700;
-            line-height: 1.1;
-            margin: 0 0 20px 0;
-            letter-spacing: -0.03em;
-        }
-
-        .branding-content p {
-            font-size: 17px;
-            line-height: 1.6;
-            opacity: 0.9;
-            margin-bottom: 40px;
-        }
-
-        .feature-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .pill {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Form Area */
-        .form-area {
-            flex: 1;
-            padding: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: var(--white);
-        }
-
-        .form-header {
             margin-bottom: 32px;
         }
 
-        .form-header h2 {
-            font-size: 28px;
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .brand-text {
+            font-size: 22px;
             font-weight: 700;
-            margin: 0 0 8px 0;
+            letter-spacing: -0.02em;
             color: var(--text-main);
         }
 
-        .form-header p {
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.01em;
+        }
+
+        .auth-header p {
             color: var(--text-muted);
-            margin: 0;
             font-size: 15px;
+            margin: 0;
         }
 
         .form-group {
             margin-bottom: 20px;
-            position: relative;
         }
 
-        .label {
+        .form-label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
             margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
-        .input-box {
+        .input-wrapper {
             position: relative;
         }
 
-        .input-box i {
+        .input-icon {
             position: absolute;
             left: 14px;
             top: 50%;
@@ -183,23 +134,31 @@
             color: var(--text-muted);
             width: 18px;
             height: 18px;
+            pointer-events: none;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px 14px 12px 42px;
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-md);
+            padding: 12px 14px 12px 40px;
             font-family: inherit;
             font-size: 15px;
+            color: var(--text-main);
+            background-color: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             box-sizing: border-box;
-            transition: all 0.2s ease;
-            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-input::placeholder {
+            color: #94A3B8;
         }
 
         .form-input:focus {
+            outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px var(--border-focus);
         }
 
         .eye-btn {
@@ -211,15 +170,23 @@
             border: none;
             color: var(--text-muted);
             cursor: pointer;
-            padding: 0;
+            padding: 4px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            border-radius: var(--radius-sm);
+        }
+
+        .eye-btn:hover {
+            color: var(--text-main);
+            background-color: #F1F5F9;
         }
 
         .form-options {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             margin-bottom: 24px;
         }
 
@@ -230,135 +197,112 @@
             font-size: 14px;
             color: var(--text-muted);
             cursor: pointer;
+            user-select: none;
         }
 
-        .remember-me input {
+        .remember-me input[type="checkbox"] {
             width: 16px;
             height: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            accent-color: var(--primary);
             cursor: pointer;
+            margin: 0;
         }
 
-        .forgot-link {
+        .forgot-pw {
             font-size: 14px;
             color: var(--primary);
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-pw:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
         }
 
         .submit-btn {
             width: 100%;
-            padding: 14px;
-            background: var(--primary);
+            padding: 12px 20px;
+            background-color: var(--primary);
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2), 0 2px 4px -1px rgba(59, 130, 246, 0.1);
         }
 
         .submit-btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+            background-color: var(--primary-hover);
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.15);
         }
 
         .submit-btn:active {
-            transform: translateY(0);
+            transform: scale(0.98);
         }
 
-        .form-footer {
-            margin-top: 32px;
+        .auth-footer {
             text-align: center;
+            margin-top: 24px;
             font-size: 14px;
             color: var(--text-muted);
         }
 
-        .form-footer a {
+        .auth-footer a {
             color: var(--primary);
-            text-decoration: none;
             font-weight: 600;
+            text-decoration: none;
+            transition: color 0.3s ease;
         }
 
-        .form-footer a:hover {
+        .auth-footer a:hover {
+            color: var(--primary-hover);
             text-decoration: underline;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .app-container {
-                width: 90%;
-                height: auto;
-                flex-direction: column;
-            }
-            .side-branding {
-                padding: 40px;
-                text-align: center;
-            }
-            .side-branding .branding-content h1 {
-                font-size: 32px;
-            }
-            .feature-pills {
-                justify-content: center;
-            }
-            .form-area {
-                padding: 40px;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Branding Side -->
-        <div class="side-branding">
-            <div class="logo">
-                <div class="logo-icon"><i data-lucide="home"></i></div>
-                <span>RoomieMatch AI</span>
-            </div>
+
+    <div class="auth-wrapper">
+        <section class="auth-card">
             
-            <div class="branding-content">
-                <h1>The smart way to find roommates.</h1>
-                <p>Join thousands of students and discover the perfect co-living partner based on your habits, preferences, and lifestyle.</p>
-                
-                <div class="feature-pills">
-                    <span class="pill">✨ Smart Scoring</span>
-                    <span class="pill">🔒 Secure Data</span>
-                    <span class="pill">📍 Hostel Scoped</span>
+            <div class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="home"></i>
                 </div>
+                <div class="brand-text">RoomieMatch AI</div>
             </div>
 
-            <div style="font-size: 12px; opacity: 0.7;">
-                &copy; 2026 RoomieMatch AI. All rights reserved.
-            </div>
-        </div>
-
-        <!-- Form Side -->
-        <div class="form-area">
-            <div class="form-header">
-                <h2>Welcome back</h2>
-                <p>Enter your credentials to access your account.</p>
-            </div>
+            <header class="auth-header">
+                <h1>Welcome back</h1>
+                <p>Sign in to your account to continue</p>
+            </header>
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label class="label">University Email</label>
-                    <div class="input-box">
-                        <i data-lucide="mail"></i>
+                    <label class="form-label" for="email">University Email</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail" class="input-icon"></i>
                         <input type="email" id="email" class="form-input" placeholder="you@university.edu" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="label">Password</label>
-                    <div class="input-box">
-                        <i data-lucide="lock"></i>
+                    <label class="form-label" for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock" class="input-icon"></i>
                         <input type="password" id="password" class="form-input" placeholder="••••••••" required>
-                        <button type="button" class="eye-btn" id="togglePassword">
+                        <button type="button" class="eye-btn" id="togglePassword" aria-label="Toggle password visibility">
                             <i data-lucide="eye" id="eyeIcon"></i>
                         </button>
                     </div>
@@ -366,21 +310,23 @@
 
                 <div class="form-options">
                     <label class="remember-me">
-                        <input type="checkbox"> Remember me
+                        <input type="checkbox"> 
+                        <span>Remember me</span>
                     </label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
+                    <a href="#" class="forgot-pw">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="submit-btn" id="loginBtn">
-                    Sign in to account
-                    <i data-lucide="arrow-right"></i>
+                    Sign In
+                    <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
                 </button>
             </form>
 
-            <div class="form-footer">
+            <footer class="auth-footer">
                 Don't have an account? <a href="signup.html">Create one for free</a>
-            </div>
-        </div>
+            </footer>
+
+        </section>
     </div>
 
     <!-- Initialization -->
