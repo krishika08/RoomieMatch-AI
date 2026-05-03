@@ -27,6 +27,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
+    @Column
+    private String organization;
+
+    @Column
+    private String hostel;
+
     @Column(name = "created_at", updatable = false)
     private java.time.LocalDateTime createdAt;
 

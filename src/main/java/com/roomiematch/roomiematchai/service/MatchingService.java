@@ -36,10 +36,17 @@ public class MatchingService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Please create your profile first before viewing matches"));
 
-        // 3. Fetch all other profiles (exclude current user)
+        // 3. Fetch all other profiles (exclude current user, filter by same hostel)
         List<StudentProfile> allProfiles = profileRepository.findAll();
         List<StudentProfile> otherProfiles = allProfiles.stream()
                 .filter(profile -> !profile.getUser().getId().equals(currentUser.getId()))
+                .filter(profile -> {
+                    // Only match with users in the same hostel
+                    String myHostel = currentUser.getHostel();
+                    String theirHostel = profile.getUser().getHostel();
+                    if (myHostel == null || theirHostel == null) return true; // allow if hostel not set
+                    return myHostel.equalsIgnoreCase(theirHostel);
+                })
                 .collect(Collectors.toList());
 
         // 4. Score each profile and build response

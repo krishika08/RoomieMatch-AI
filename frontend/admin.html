@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard — RoomieMatch AI</title>
+  <meta name="description" content="Admin dashboard for managing students, requests, and roommate assignments.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <span class="brand-name">Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="admin.html"     class="nav-item active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="#" class="nav-item" id="navStudents" onclick="showSection('students')"><i class="fa-solid fa-users"></i> Students</a>
+      <a href="#" class="nav-item" id="navRequests" onclick="showSection('requests')"><i class="fa-solid fa-bell"></i> Requests</a>
+      <a href="#" class="nav-item" id="navAssign"   onclick="showSection('assign')"><i class="fa-solid fa-link"></i> Assign</a>
+      <div class="nav-divider"></div>
+      <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-arrow-left"></i> User Dashboard</a>
+      <a href="#" class="nav-item nav-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign out</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#ef4444,#f87171);">A</div>
+        <span class="user-email" id="sidebarEmail">admin@upes.ac.in</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header" data-aos="fade-down" data-aos-duration="400">
+      <h1><i class="fa-solid fa-shield-halved" style="margin-right:8px;"></i> Admin Dashboard</h1>
+      <p>Manage students, roommate requests, and assignments for your organization.</p>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row g-3" id="adminStats" data-aos="fade-up">
+      <div class="col-md-4">
+        <div class="card stat-card h-100">
+          <div class="stat-icon icon-purple"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-title" id="statStudents">— Students</div>
+          <div class="stat-desc">Total registered students in your organization.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card h-100">
+          <div class="stat-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
+          <div class="stat-title" id="statPending">— Pending</div>
+          <div class="stat-desc">Roommate requests waiting for a response.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stat-card h-100">
+          <div class="stat-icon icon-green"><i class="fa-solid fa-check-double"></i></div>
+          <div class="stat-title" id="statAccepted">— Accepted</div>
+          <div class="stat-desc">Successfully matched roommate pairs.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Students ═══ -->
+    <div id="sectionStudents" class="admin-section mt-4" data-aos="fade-up">
+      <div class="section-header">
+        <div class="section-label"><i class="fa-solid fa-users"></i> Student Directory</div>
+        <div class="admin-filters">
+          <select id="hostelFilter" class="form-select form-select-sm" style="width:auto;min-width:200px;" onchange="loadStudents()">
+            <option value="">All Hostels</option>
+            <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
+            <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Organization</th>
+                <th>Hostel</th>
+                <th>Profile</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody">
+              <tr><td colspan="6" class="table-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Requests ═══ -->
+    <div id="sectionRequests" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-header">
+        <div class="section-label"><i class="fa-solid fa-bell"></i> Roommate Requests</div>
+        <div class="admin-filters">
+          <select id="statusFilter" class="form-select form-select-sm" style="width:auto;min-width:180px;" onchange="loadRequests()">
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="ACCEPTED">Accepted</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="requestsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Status</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="requestsBody">
+              <tr><td colspan="5" class="table-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Assign ═══ -->
+    <div id="sectionAssign" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-label"><i class="fa-solid fa-link"></i> Manual Roommate Assignment</div>
+      <div class="card" style="max-width:500px;">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:18px;">
+          Select two students to assign as roommates. Both must be in the same hostel.
+        </p>
+        <form id="assignForm">
+          <div class="form-group">
+            <label class="form-label" for="assignUser1">Student 1 (User ID)</label>
+            <input type="number" id="assignUser1" class="form-control" placeholder="Enter User ID" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="assignUser2">Student 2 (User ID)</label>
+            <input type="number" id="assignUser2" class="form-control" placeholder="Enter User ID" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100" id="assignBtn">
+            <i class="fa-solid fa-link fa-sm"></i> Assign Roommates
+          </button>
+        </form>
+        <div id="assignResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script src="script.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   Admin Dashboard — Inline Script
+   ═══════════════════════════════════════════════════ */
+
+// Verify user is admin
+(function() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'ADMIN' && role !== 'HOSTEL_ADMIN') {
+    toast('Access denied. Admin only.', 'error');
+    setTimeout(() => window.location.href = 'dashboard.html', 800);
+    return;
+  }
+
+  // If HOSTEL_ADMIN, hide the hostel filter (they auto-filter)
+  if (role === 'HOSTEL_ADMIN') {
+    const hf = document.getElementById('hostelFilter');
+    if (hf) hf.closest('.admin-filters')?.remove();
+  }
+})();
+
+// Section navigation
+function showSection(name) {
+  ['Students', 'Requests', 'Assign'].forEach(s => {
+    const el = document.getElementById('section' + s);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+
+  const target = document.getElementById('section' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (target) target.style.display = 'block';
+
+  const nav = document.getElementById('nav' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (nav) nav.classList.add('active');
+
+  if (name === 'students') loadStudents();
+  if (name === 'requests') loadRequests();
+}
+
+// Load stats on page load
+async function loadStats() {
+  try {
+    const [studentsRes, pendingRes, acceptedRes] = await Promise.all([
+      api('/admin/students'),
+      api('/admin/requests?status=PENDING'),
+      api('/admin/requests?status=ACCEPTED'),
+    ]);
+    document.getElementById('statStudents').textContent = (studentsRes.data?.length || 0) + ' Students';
+    document.getElementById('statPending').textContent  = (pendingRes.data?.length || 0) + ' Pending';
+    document.getElementById('statAccepted').textContent = (acceptedRes.data?.length || 0) + ' Accepted';
+  } catch (_) {}
+}
+
+// Load students table
+async function loadStudents() {
+  const tbody = document.getElementById('studentsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading…</td></tr>';
+
+  const hostel = document.getElementById('hostelFilter')?.value || '';
+  const url = '/admin/students' + (hostel ? '?hostel=' + hostel : '');
+
+  try {
+    const res = await api(url);
+    const students = res.data || [];
+
+    if (!students.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No students found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = students.map(s => `
+      <tr>
+        <td><span class="table-id">${s.id}</span></td>
+        <td>${s.email}</td>
+        <td><span class="badge badge-org">${s.organization || '—'}</span></td>
+        <td><span class="badge ${s.hostel?.includes('BOYS') ? 'badge-boys' : 'badge-girls'}">${fmtHostel(s.hostel)}</span></td>
+        <td>${s.profileComplete
+              ? '<span style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Done</span>'
+              : '<span style="color:var(--text-3);"><i class="fa-regular fa-circle"></i> No</span>'}</td>
+        <td style="color:var(--text-3);font-size:12px;">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load students</td></tr>';
+  }
+}
+
+// Load requests table
+async function loadRequests() {
+  const tbody = document.getElementById('requestsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading…</td></tr>';
+
+  const status = document.getElementById('statusFilter')?.value || '';
+  const url = '/admin/requests' + (status ? '?status=' + status : '');
+
+  try {
+    const res = await api(url);
+    const requests = res.data || [];
+
+    if (!requests.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No requests found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = requests.map(r => `
+      <tr>
+        <td><span class="table-id">${r.id}</span></td>
+        <td>${r.senderEmail || 'User #' + r.senderId}</td>
+        <td>${r.receiverEmail || 'User #' + r.receiverId}</td>
+        <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
+        <td style="color:var(--text-3);font-size:12px;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Failed to load requests</td></tr>';
+  }
+}
+
+// Assign form
+document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('assignBtn');
+  const u1  = document.getElementById('assignUser1').value;
+  const u2  = document.getElementById('assignUser2').value;
+  const res_div = document.getElementById('assignResult');
+
+  if (!u1 || !u2) { toast('Please enter both user IDs.', 'error'); return; }
+
+  setBtnLoading(btn, true);
+  try {
+    const res = await api('/admin/assign', {
+      method: 'POST',
+      body: JSON.stringify({ userId1: parseInt(u1), userId2: parseInt(u2) })
+    });
+    toast('Roommates assigned successfully!');
+    if (res_div) {
+      res_div.innerHTML = `
+        <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:13px;color:var(--success);">
+          <i class="fa-solid fa-check-circle"></i> Assigned: User #${u1} ↔ User #${u2} (Request #${res.data?.id})
+        </div>`;
+    }
+    loadStats();
+  } catch (_) {
+  } finally {
+    setBtnLoading(btn, false);
+  }
+});
+
+// Hostel name formatter
+function fmtHostel(h) {
+  if (!h) return '—';
+  return h.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Init
+loadStats();
+loadStudents();
+</script>
+</body>
+</html>

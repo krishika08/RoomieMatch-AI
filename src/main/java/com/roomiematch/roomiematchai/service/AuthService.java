@@ -4,6 +4,8 @@ import com.roomiematch.roomiematchai.dto.LoginRequestDTO;
 import com.roomiematch.roomiematchai.dto.LoginResponseDTO;
 import com.roomiematch.roomiematchai.dto.UserRequestDTO;
 import com.roomiematch.roomiematchai.dto.UserResponseDTO;
+import com.roomiematch.roomiematchai.entity.Hostel;
+import com.roomiematch.roomiematchai.entity.Organization;
 import com.roomiematch.roomiematchai.entity.User;
 import com.roomiematch.roomiematchai.exception.DuplicateEmailException;
 import com.roomiematch.roomiematchai.exception.InvalidCredentialsException;
@@ -42,13 +44,35 @@ public class AuthService {
             throw new DuplicateEmailException(request.getEmail());
         }
 
+        // Validate organization
+        try {
+            Organization.valueOf(request.getOrganization().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid organization. Supported: UPES");
+        }
+
+        // Validate hostel
+        try {
+            Hostel.valueOf(request.getHostel().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid hostel. Supported: BIDHOLI_BOYS_HOSTEL, BIDHOLI_GIRLS_HOSTEL");
+        }
+
         User user = new User();
         user.setEmail(request.getEmail());
         // Hash the password
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setOrganization(request.getOrganization().toUpperCase());
+        user.setHostel(request.getHostel().toUpperCase());
 
         User savedUser = userRepository.save(user);
-        return new UserResponseDTO(savedUser.getId(), savedUser.getEmail());
+        return new UserResponseDTO(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getRole().name(),
+                savedUser.getOrganization(),
+                savedUser.getHostel()
+        );
     }
 
     public LoginResponseDTO login(LoginRequestDTO request) {
@@ -67,6 +91,6 @@ public class AuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtil.generateToken(userDetails);
 
-        return new LoginResponseDTO(token, user.getId(), user.getEmail());
+        return new LoginResponseDTO(token, user.getId(), user.getEmail(), user.getRole().name());
     }
 }

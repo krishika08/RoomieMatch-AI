@@ -19,4 +19,7 @@ public interface RoommateRequestRepository extends JpaRepository<RoommateRequest
 
     // Check if a pending request already exists between sender and receiver (prevents duplicates)
     Optional<RoommateRequest> findBySenderIdAndReceiverIdAndStatus(Long senderId, Long receiverId, RequestStatus status);
+
+    // Admin: fetch all requests by status
+    List<RoommateRequest> findByStatus(RequestStatus status);
 }

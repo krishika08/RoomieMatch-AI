@@ -20,7 +20,13 @@ public class UserService {
     // Fetches all users and maps to DTOs (never expose raw entities)
     public List<UserResponseDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(user -> new UserResponseDTO(user.getId(), user.getEmail()))
+                .map(user -> new UserResponseDTO(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getRole().name(),
+                        user.getOrganization(),
+                        user.getHostel()
+                ))
                 .collect(Collectors.toList());
     }
 }

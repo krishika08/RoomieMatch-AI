@@ -16,4 +16,10 @@ public class UserRequestDTO {
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
+
+    @NotBlank(message = "Organization is required")
+    private String organization;
+
+    @NotBlank(message = "Hostel is required")
+    private String hostel;
 }

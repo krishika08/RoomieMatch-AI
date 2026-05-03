@@ -25,6 +25,7 @@ const getToken     = ()  => localStorage.getItem('jwt');
 const setToken     = (t) => localStorage.setItem('jwt', t);
 const clearToken   = ()  => localStorage.removeItem('jwt');
 const getUserEmail = ()  => localStorage.getItem('userEmail') || '';
+const getUserRole  = ()  => localStorage.getItem('userRole') || 'USER';
 
 /* ── Toast ────────────────────────────────────────── */
 function toast(msg, type = 'success') {
@@ -78,7 +79,15 @@ function checkAuth() {
   const isPublic = ['index.html', 'signup.html'].some(p => path.endsWith(p)) || path.endsWith('/');
   const token    = getToken();
   if (!token && !isPublic) { window.location.href = 'index.html'; return false; }
-  if (token  && isPublic)  { window.location.href = 'dashboard.html'; return false; }
+  if (token  && isPublic)  {
+    const role = getUserRole();
+    if (role === 'ADMIN' || role === 'HOSTEL_ADMIN') {
+      window.location.href = 'admin.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+    return false;
+  }
   return true;
 }
 
@@ -86,6 +95,7 @@ function logout() {
   clearToken();
   localStorage.removeItem('userId');
   localStorage.removeItem('userEmail');
+  localStorage.removeItem('userRole');
   window.location.href = 'index.html';
 }
 
@@ -98,6 +108,21 @@ function initSidebar() {
   const em = document.getElementById('sidebarEmail');
   if (av) av.textContent = initials;
   if (em) em.textContent = email || 'user@app.com';
+
+  // Show admin link in sidebar for admin users
+  const role = getUserRole();
+  if ((role === 'ADMIN' || role === 'HOSTEL_ADMIN') && !window.location.pathname.endsWith('admin.html')) {
+    const nav = document.querySelector('.sidebar-nav');
+    const divider = document.querySelector('.nav-divider');
+    if (nav && divider) {
+      const adminLink = document.createElement('a');
+      adminLink.href = 'admin.html';
+      adminLink.className = 'nav-item';
+      adminLink.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Admin Panel';
+      adminLink.style.color = '#ef4444';
+      nav.insertBefore(adminLink, divider);
+    }
+  }
 }
 
 /* ── Button loading ───────────────────────────────── */
@@ -142,15 +167,17 @@ function initLoginPage() {
 
     setBtnLoading(btn, true);
     try {
-      // Response: ApiResponse<LoginResponseDTO>  → { success, message, data: { token, userId, email } }
+      // Response: ApiResponse<LoginResponseDTO>  → { success, message, data: { token, userId, email, role } }
       const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
       const d   = res.data;
       if (d && d.token) {
         setToken(d.token);
         localStorage.setItem('userId', d.userId);
         localStorage.setItem('userEmail', d.email);
+        localStorage.setItem('userRole', d.role || 'USER');
         toast('Welcome back, ' + d.email + '!');
-        setTimeout(() => window.location.href = 'dashboard.html', 700);
+        const dest = (d.role === 'ADMIN' || d.role === 'HOSTEL_ADMIN') ? 'admin.html' : 'dashboard.html';
+        setTimeout(() => window.location.href = dest, 700);
       } else {
         throw new Error('Unexpected response from server.');
       }
@@ -169,16 +196,20 @@ function initSignupPage() {
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn      = document.getElementById('signupBtn');
-    const email    = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
+    const btn          = document.getElementById('signupBtn');
+    const email        = document.getElementById('regEmail').value.trim();
+    const password     = document.getElementById('regPassword').value;
+    const organization = document.getElementById('regOrganization')?.value || '';
+    const hostel       = document.getElementById('regHostel')?.value || '';
 
     if (!email || !password) { toast('Please fill in all fields.', 'error'); return; }
     if (password.length < 8) { toast('Password must be at least 8 characters.', 'error'); return; }
+    if (!organization) { toast('Please select your organization.', 'error'); return; }
+    if (!hostel) { toast('Please select your hostel.', 'error'); return; }
 
     setBtnLoading(btn, true);
     try {
-      await api('/auth/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
+      await api('/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, organization, hostel }) });
       toast('Account created! Please sign in.');
       setTimeout(() => window.location.href = 'index.html', 1000);
     } catch (_) {
