@@ -41,10 +41,17 @@ public class MatchingService {
         List<StudentProfile> otherProfiles = allProfiles.stream()
                 .filter(profile -> !profile.getUser().getId().equals(currentUser.getId()))
                 .filter(profile -> {
+                    // Only match with users in the same organization
+                    String myOrg = currentUser.getOrganization();
+                    String theirOrg = profile.getUser().getOrganization();
+                    if (myOrg == null || theirOrg == null) return false;
+                    return myOrg.equalsIgnoreCase(theirOrg);
+                })
+                .filter(profile -> {
                     // Only match with users in the same hostel
                     String myHostel = currentUser.getHostel();
                     String theirHostel = profile.getUser().getHostel();
-                    if (myHostel == null || theirHostel == null) return true; // allow if hostel not set
+                    if (myHostel == null || theirHostel == null) return false;
                     return myHostel.equalsIgnoreCase(theirHostel);
                 })
                 .collect(Collectors.toList());

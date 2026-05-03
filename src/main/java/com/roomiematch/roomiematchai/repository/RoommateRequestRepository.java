@@ -22,4 +22,16 @@ public interface RoommateRequestRepository extends JpaRepository<RoommateRequest
 
     // Admin: fetch all requests by status
     List<RoommateRequest> findByStatus(RequestStatus status);
+
+    // Admin: fetch requests involving users in a specific hostel
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT r FROM RoommateRequest r WHERE r.sender.hostel = :hostel OR r.receiver.hostel = :hostel")
+    List<RoommateRequest> findByHostel(@org.springframework.data.repository.query.Param("hostel") String hostel);
+
+    // Admin: fetch requests involving users in a specific hostel AND with a specific status
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT r FROM RoommateRequest r WHERE (r.sender.hostel = :hostel OR r.receiver.hostel = :hostel) AND r.status = :status")
+    List<RoommateRequest> findByHostelAndStatus(
+        @org.springframework.data.repository.query.Param("hostel") String hostel,
+        @org.springframework.data.repository.query.Param("status") RequestStatus status);
 }

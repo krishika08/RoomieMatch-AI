@@ -67,4 +67,17 @@ public class AdminController {
         RoommateRequestResponseDTO result = adminService.assignRoommates(request.getUserId1(), request.getUserId2());
         return ResponseEntity.ok(new ApiResponse<>("Roommates assigned successfully", result));
     }
+
+    /**
+     * PUT /admin/requests/{id}/respond?status=ACCEPTED
+     *
+     * Allows admins to accept or reject any pending request in their scope.
+     */
+    @PutMapping("/requests/{id}/respond")
+    public ResponseEntity<ApiResponse<RoommateRequestResponseDTO>> respondToRequest(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        RoommateRequestResponseDTO result = adminService.respondToRequest(id, status);
+        return ResponseEntity.ok(new ApiResponse<>("Request " + status.toLowerCase() + " successfully", result));
+    }
 }

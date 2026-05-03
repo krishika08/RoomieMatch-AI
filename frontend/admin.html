@@ -116,7 +116,7 @@
           </select>
         </div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden;">
+    <div class="card" style="padding:0;overflow:hidden;">
         <div class="admin-table-wrap">
           <table class="admin-table" id="requestsTable">
             <thead>
@@ -126,10 +126,11 @@
                 <th>Receiver</th>
                 <th>Status</th>
                 <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="requestsBody">
-              <tr><td colspan="5" class="table-empty">Loading…</td></tr>
+              <tr><td colspan="6" class="table-empty">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -258,7 +259,7 @@ async function loadStudents() {
 async function loadRequests() {
   const tbody = document.getElementById('requestsBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading…</td></tr>';
 
   const status = document.getElementById('statusFilter')?.value || '';
   const url = '/admin/requests' + (status ? '?status=' + status : '');
@@ -268,7 +269,7 @@ async function loadRequests() {
     const requests = res.data || [];
 
     if (!requests.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No requests found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No requests found</td></tr>';
       return;
     }
 
@@ -279,11 +280,31 @@ async function loadRequests() {
         <td>${r.receiverEmail || 'User #' + r.receiverId}</td>
         <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
         <td style="color:var(--text-3);font-size:12px;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}</td>
+        <td>
+          ${r.status === 'PENDING' ? `
+            <button class="btn btn-success btn-sm" onclick="adminRespondRequest(${r.id}, 'ACCEPTED')" title="Accept">
+              <i class="fa-solid fa-check"></i>
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="adminRespondRequest(${r.id}, 'REJECTED')" title="Reject">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          ` : '<span style="color:var(--text-3);font-size:12px;">—</span>'}
+        </td>
       </tr>
     `).join('');
   } catch (_) {
-    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Failed to load requests</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load requests</td></tr>';
   }
+}
+
+// Admin: Accept or Reject a request
+async function adminRespondRequest(requestId, status) {
+  try {
+    await api('/admin/requests/' + requestId + '/respond?status=' + status, { method: 'PUT' });
+    toast('Request ' + status.toLowerCase() + ' successfully!');
+    loadRequests();
+    loadStats();
+  } catch (_) {}
 }
 
 // Assign form

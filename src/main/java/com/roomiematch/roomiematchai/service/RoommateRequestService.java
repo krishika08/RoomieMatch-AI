@@ -44,6 +44,18 @@ public class RoommateRequestService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receiver user not found with id: " + receiverId));
 
+        // Validation: Must be in the same hostel
+        if (sender.getHostel() != null && receiver.getHostel() != null
+                && !sender.getHostel().equalsIgnoreCase(receiver.getHostel())) {
+            throw new IllegalStateException("You can only send roommate requests to users in your hostel.");
+        }
+
+        // Validation: Must be in the same organization
+        if (sender.getOrganization() != null && receiver.getOrganization() != null
+                && !sender.getOrganization().equalsIgnoreCase(receiver.getOrganization())) {
+            throw new IllegalStateException("You can only send roommate requests to users in your organization.");
+        }
+
         // Validation: Prevent duplicate pending requests (A→B)
         requestRepository.findBySenderIdAndReceiverIdAndStatus(sender.getId(), receiverId, RequestStatus.PENDING)
                 .ifPresent(existing -> {

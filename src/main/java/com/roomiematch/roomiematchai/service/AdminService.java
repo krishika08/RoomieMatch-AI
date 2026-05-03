@@ -76,25 +76,28 @@ public class AdminService {
         log.info("Admin {} fetching requests, status filter: {}", admin.getEmail(), statusFilter);
 
         List<RoommateRequest> requests;
+        boolean isHostelAdmin = admin.getRole() == Role.HOSTEL_ADMIN;
+        String adminHostel = admin.getHostel();
 
+        RequestStatus status = null;
         if (statusFilter != null && !statusFilter.isBlank()) {
             try {
-                RequestStatus status = RequestStatus.valueOf(statusFilter.toUpperCase());
-                requests = requestRepository.findByStatus(status);
+                status = RequestStatus.valueOf(statusFilter.toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new IllegalStateException("Invalid status filter. Use: PENDING, ACCEPTED, REJECTED");
             }
-        } else {
-            requests = requestRepository.findAll();
         }
 
-        // For hostel admins, filter to only requests involving users in their hostel
-        if (admin.getRole() == Role.HOSTEL_ADMIN) {
-            String adminHostel = admin.getHostel();
-            requests = requests.stream()
-                    .filter(r -> adminHostel.equals(r.getSender().getHostel())
-                              || adminHostel.equals(r.getReceiver().getHostel()))
-                    .collect(Collectors.toList());
+        if (isHostelAdmin && adminHostel != null) {
+            // Hostel admin: DB-level filtering by hostel
+            requests = (status != null)
+                    ? requestRepository.findByHostelAndStatus(adminHostel, status)
+                    : requestRepository.findByHostel(adminHostel);
+        } else {
+            // Super admin: all requests, optionally filtered by status
+            requests = (status != null)
+                    ? requestRepository.findByStatus(status)
+                    : requestRepository.findAll();
         }
 
         return requests.stream()
@@ -154,6 +157,51 @@ public class AdminService {
         log.info("Admin assigned roommates: {} <-> {} (request #{})", user1.getEmail(), user2.getEmail(), saved.getId());
 
         return new RoommateRequestResponseDTO(saved);
+    }
+
+    // ──────────────────────────────────────────────
+    //  4. Admin respond to a request (accept/reject)
+    // ──────────────────────────────────────────────
+    @Transactional
+    public RoommateRequestResponseDTO respondToRequest(Long requestId, String statusStr) {
+        User admin = authContext.getLoggedInUser();
+        log.info("Admin {} responding to request #{} with status: {}", admin.getEmail(), requestId, statusStr);
+
+        // Parse status
+        RequestStatus newStatus;
+        try {
+            newStatus = RequestStatus.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Invalid status. Use ACCEPTED or REJECTED.");
+        }
+        if (newStatus == RequestStatus.PENDING) {
+            throw new IllegalStateException("Invalid status. Use ACCEPTED or REJECTED.");
+        }
+
+        // Fetch the request
+        RoommateRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Roommate request not found with id: " + requestId));
+
+        // Can only respond to PENDING requests
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("This request has already been " + request.getStatus().name().toLowerCase() + ".");
+        }
+
+        // Hostel admin: can only manage requests involving users in their hostel
+        if (admin.getRole() == Role.HOSTEL_ADMIN) {
+            String adminHostel = admin.getHostel();
+            boolean senderInHostel = adminHostel != null && adminHostel.equals(request.getSender().getHostel());
+            boolean receiverInHostel = adminHostel != null && adminHostel.equals(request.getReceiver().getHostel());
+            if (!senderInHostel && !receiverInHostel) {
+                throw new IllegalStateException("You can only manage requests within your hostel.");
+            }
+        }
+
+        request.setStatus(newStatus);
+        RoommateRequest updated = requestRepository.save(request);
+        log.info("Admin {} {} request #{}", admin.getEmail(), newStatus, requestId);
+
+        return new RoommateRequestResponseDTO(updated);
     }
 
     // ──────────────────────────────────────────────
