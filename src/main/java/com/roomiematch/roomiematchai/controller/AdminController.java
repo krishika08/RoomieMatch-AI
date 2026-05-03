@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Admin API endpoints.
- * Protected by Spring Security — only ADMIN and HOSTEL_ADMIN roles can access.
+ * Legacy Admin API endpoints — kept for backward compatibility.
+ * Protected by Spring Security — only MANAGER and WARDEN roles can access.
  */
 @RestController
 @RequestMapping("/admin")
-@PreAuthorize("hasAnyRole('ADMIN', 'HOSTEL_ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'WARDEN')")
 public class AdminController {
 
     private final AdminService adminService;
@@ -27,13 +27,6 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-    /**
-     * GET /admin/students
-     * GET /admin/students?hostel=BIDHOLI_BOYS_HOSTEL
-     *
-     * Returns all students in the admin's organization.
-     * Super admin can filter by hostel; hostel admin auto-filters to their hostel.
-     */
     @GetMapping("/students")
     public ResponseEntity<ApiResponse<List<AdminStudentResponseDTO>>> getStudents(
             @RequestParam(required = false) String hostel) {
@@ -41,12 +34,6 @@ public class AdminController {
         return ResponseEntity.ok(new ApiResponse<>("Students fetched successfully", students));
     }
 
-    /**
-     * GET /admin/requests
-     * GET /admin/requests?status=PENDING
-     *
-     * Returns all roommate requests, optionally filtered by status.
-     */
     @GetMapping("/requests")
     public ResponseEntity<ApiResponse<List<RoommateRequestResponseDTO>>> getRequests(
             @RequestParam(required = false) String status) {
@@ -54,13 +41,6 @@ public class AdminController {
         return ResponseEntity.ok(new ApiResponse<>("Requests fetched successfully", requests));
     }
 
-    /**
-     * POST /admin/assign
-     * body: { "userId1": 2, "userId2": 4 }
-     *
-     * Manually assigns two users as roommates (auto-accepted request).
-     * Both users must be in the same organization AND same hostel.
-     */
     @PostMapping("/assign")
     public ResponseEntity<ApiResponse<RoommateRequestResponseDTO>> assignRoommates(
             @Valid @RequestBody AdminAssignRequestDTO request) {
@@ -68,11 +48,6 @@ public class AdminController {
         return ResponseEntity.ok(new ApiResponse<>("Roommates assigned successfully", result));
     }
 
-    /**
-     * PUT /admin/requests/{id}/respond?status=ACCEPTED
-     *
-     * Allows admins to accept or reject any pending request in their scope.
-     */
     @PutMapping("/requests/{id}/respond")
     public ResponseEntity<ApiResponse<RoommateRequestResponseDTO>> respondToRequest(
             @PathVariable Long id,

@@ -16,10 +16,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service layer for admin operations.
- * Supports two admin types:
- *   - ADMIN (super admin): can see ALL users across ALL hostels in the organization
- *   - HOSTEL_ADMIN: can only see users in their assigned hostel
+ * Legacy admin service — kept for backward compatibility with /admin/** endpoints.
+ * Now uses MANAGER/WARDEN roles instead of ADMIN/HOSTEL_ADMIN.
  */
 @Service
 public class AdminService {
@@ -50,20 +48,20 @@ public class AdminService {
 
         List<User> users;
 
-        if (admin.getRole() == Role.HOSTEL_ADMIN) {
-            // Hostel admin can only see users in their own hostel
+        if (admin.getRole() == Role.WARDEN) {
+            // Warden can only see users in their own hostel
             users = userRepository.findByOrganizationAndHostel(admin.getOrganization(), admin.getHostel());
         } else if (hostelFilter != null && !hostelFilter.isBlank()) {
-            // Super admin with hostel filter
+            // Manager with hostel filter
             users = userRepository.findByOrganizationAndHostel(admin.getOrganization(), hostelFilter.toUpperCase());
         } else {
-            // Super admin — all users in the organization
+            // Manager — all users in the organization
             users = userRepository.findByOrganization(admin.getOrganization());
         }
 
-        // Exclude admin users from the student list
+        // Exclude admin/warden users from the student list
         return users.stream()
-                .filter(u -> u.getRole() == Role.USER)
+                .filter(u -> u.getRole() == Role.STUDENT)
                 .map(this::toStudentDTO)
                 .collect(Collectors.toList());
     }
@@ -76,7 +74,7 @@ public class AdminService {
         log.info("Admin {} fetching requests, status filter: {}", admin.getEmail(), statusFilter);
 
         List<RoommateRequest> requests;
-        boolean isHostelAdmin = admin.getRole() == Role.HOSTEL_ADMIN;
+        boolean isWarden = admin.getRole() == Role.WARDEN;
         String adminHostel = admin.getHostel();
 
         RequestStatus status = null;
@@ -88,13 +86,11 @@ public class AdminService {
             }
         }
 
-        if (isHostelAdmin && adminHostel != null) {
-            // Hostel admin: DB-level filtering by hostel
+        if (isWarden && adminHostel != null) {
             requests = (status != null)
                     ? requestRepository.findByHostelAndStatus(adminHostel, status)
                     : requestRepository.findByHostel(adminHostel);
         } else {
-            // Super admin: all requests, optionally filtered by status
             requests = (status != null)
                     ? requestRepository.findByStatus(status)
                     : requestRepository.findAll();
@@ -122,22 +118,16 @@ public class AdminService {
         User user2 = userRepository.findById(userId2)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId2));
 
-        // Validation: same organization
         if (!user1.getOrganization().equals(user2.getOrganization())) {
             throw new IllegalStateException("Cannot assign roommates from different organizations.");
         }
-
-        // Validation: same hostel
         if (!user1.getHostel().equals(user2.getHostel())) {
             throw new IllegalStateException("Cannot assign roommates from different hostels.");
         }
-
-        // Hostel admin can only assign within their hostel
-        if (admin.getRole() == Role.HOSTEL_ADMIN && !admin.getHostel().equals(user1.getHostel())) {
+        if (admin.getRole() == Role.WARDEN && !admin.getHostel().equals(user1.getHostel())) {
             throw new IllegalStateException("You can only assign roommates within your hostel.");
         }
 
-        // Check for existing pending/accepted request between these users (either direction)
         requestRepository.findBySenderIdAndReceiverIdAndStatus(userId1, userId2, RequestStatus.PENDING)
                 .ifPresent(r -> { throw new IllegalStateException("A pending request already exists between these users."); });
         requestRepository.findBySenderIdAndReceiverIdAndStatus(userId2, userId1, RequestStatus.PENDING)
@@ -147,7 +137,6 @@ public class AdminService {
         requestRepository.findBySenderIdAndReceiverIdAndStatus(userId2, userId1, RequestStatus.ACCEPTED)
                 .ifPresent(r -> { throw new IllegalStateException("These users are already assigned as roommates."); });
 
-        // Create an auto-accepted request
         RoommateRequest request = new RoommateRequest();
         request.setSender(user1);
         request.setReceiver(user2);
@@ -165,9 +154,7 @@ public class AdminService {
     @Transactional
     public RoommateRequestResponseDTO respondToRequest(Long requestId, String statusStr) {
         User admin = authContext.getLoggedInUser();
-        log.info("Admin {} responding to request #{} with status: {}", admin.getEmail(), requestId, statusStr);
 
-        // Parse status
         RequestStatus newStatus;
         try {
             newStatus = RequestStatus.valueOf(statusStr.toUpperCase());
@@ -178,17 +165,14 @@ public class AdminService {
             throw new IllegalStateException("Invalid status. Use ACCEPTED or REJECTED.");
         }
 
-        // Fetch the request
         RoommateRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Roommate request not found with id: " + requestId));
 
-        // Can only respond to PENDING requests
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new IllegalStateException("This request has already been " + request.getStatus().name().toLowerCase() + ".");
         }
 
-        // Hostel admin: can only manage requests involving users in their hostel
-        if (admin.getRole() == Role.HOSTEL_ADMIN) {
+        if (admin.getRole() == Role.WARDEN) {
             String adminHostel = admin.getHostel();
             boolean senderInHostel = adminHostel != null && adminHostel.equals(request.getSender().getHostel());
             boolean receiverInHostel = adminHostel != null && adminHostel.equals(request.getReceiver().getHostel());
@@ -199,19 +183,19 @@ public class AdminService {
 
         request.setStatus(newStatus);
         RoommateRequest updated = requestRepository.save(request);
-        log.info("Admin {} {} request #{}", admin.getEmail(), newStatus, requestId);
-
         return new RoommateRequestResponseDTO(updated);
     }
 
     // ──────────────────────────────────────────────
-    //  Helper: Convert User to AdminStudentResponseDTO
+    //  Helper
     // ──────────────────────────────────────────────
     private AdminStudentResponseDTO toStudentDTO(User user) {
         boolean hasProfile = profileRepository.findByUserId(user.getId()).isPresent();
         return new AdminStudentResponseDTO(
                 user.getId(),
+                user.getName(),
                 user.getEmail(),
+                user.getSapId(),
                 user.getRole().name(),
                 user.getOrganization(),
                 user.getHostel(),

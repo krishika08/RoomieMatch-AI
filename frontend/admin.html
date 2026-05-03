@@ -172,17 +172,17 @@
    Admin Dashboard — Inline Script
    ═══════════════════════════════════════════════════ */
 
-// Verify user is admin
+// Verify user is admin/warden
 (function() {
   const role = localStorage.getItem('userRole');
-  if (role !== 'ADMIN' && role !== 'HOSTEL_ADMIN') {
-    toast('Access denied. Admin only.', 'error');
+  if (role !== 'MANAGER' && role !== 'WARDEN') {
+    toast('Access denied. Warden/Manager only.', 'error');
     setTimeout(() => window.location.href = 'dashboard.html', 800);
     return;
   }
 
-  // If HOSTEL_ADMIN, hide the hostel filter (they auto-filter)
-  if (role === 'HOSTEL_ADMIN') {
+  // If WARDEN, hide the hostel filter (they auto-filter)
+  if (role === 'WARDEN') {
     const hf = document.getElementById('hostelFilter');
     if (hf) hf.closest('.admin-filters')?.remove();
   }

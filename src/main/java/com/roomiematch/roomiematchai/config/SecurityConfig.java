@@ -68,7 +68,10 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "HOSTEL_ADMIN")
+                // Hierarchical admin endpoints
+                .requestMatchers("/manager/**").hasRole("MANAGER")
+                .requestMatchers("/warden/**").hasAnyRole("WARDEN", "MANAGER")
+                .requestMatchers("/admin/**").hasAnyRole("MANAGER", "WARDEN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

@@ -22,10 +22,12 @@ public class UserService {
         return userRepository.findAll().stream()
                 .map(user -> new UserResponseDTO(
                         user.getId(),
+                        user.getName(),
                         user.getEmail(),
                         user.getRole().name(),
                         user.getOrganization(),
-                        user.getHostel()
+                        user.getHostel(),
+                        user.getSapId()
                 ))
                 .collect(Collectors.toList());
     }

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manager Dashboard — RoomieMatch AI</title>
+  <meta name="description" content="Hostel Manager dashboard for uploading students, assigning wardens, and managing hostels.">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fa-solid fa-crown"></i></div>
+      <span class="brand-name">Manager</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('overview')"><i class="fa-solid fa-gauge"></i> Overview</a>
+      <a href="#" class="nav-item" id="navUpload"   onclick="showSection('upload')"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Students</a>
+      <a href="#" class="nav-item" id="navWardens"  onclick="showSection('wardens')"><i class="fa-solid fa-user-shield"></i> Wardens</a>
+      <a href="#" class="nav-item" id="navStudents" onclick="showSection('students')"><i class="fa-solid fa-users"></i> Students</a>
+      <a href="#" class="nav-item" id="navRequests" onclick="showSection('requests')"><i class="fa-solid fa-bell"></i> Requests</a>
+      <a href="#" class="nav-item" id="navAssign"   onclick="showSection('assign')"><i class="fa-solid fa-link"></i> Assign</a>
+      <div class="nav-divider"></div>
+      <a href="admin.html" class="nav-item"><i class="fa-solid fa-shield-halved"></i> Warden View</a>
+      <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-arrow-left"></i> User Dashboard</a>
+      <a href="#" class="nav-item nav-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign out</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">M</div>
+        <span class="user-email" id="sidebarEmail">manager@upes.ac.in</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header" data-aos="fade-down" data-aos-duration="400">
+      <h1><i class="fa-solid fa-crown" style="margin-right:8px;color:#f59e0b;"></i> Hostel Manager Dashboard</h1>
+      <p>Upload student datasets, assign wardens, and oversee all hostels.</p>
+    </div>
+
+    <!-- ═══ SECTION: Overview ═══ -->
+    <div id="sectionOverview" data-aos="fade-up">
+      <div class="row g-3" id="managerStats">
+        <div class="col-md-3">
+          <div class="card stat-card h-100">
+            <div class="stat-icon icon-purple"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-title" id="statStudents">— Students</div>
+            <div class="stat-desc">Total registered students.</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stat-card h-100">
+            <div class="stat-icon" style="background:rgba(245,158,11,0.15);color:#f59e0b;"><i class="fa-solid fa-user-shield"></i></div>
+            <div class="stat-title" id="statWardens">— Wardens</div>
+            <div class="stat-desc">Active hostel wardens.</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stat-card h-100">
+            <div class="stat-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-title" id="statPending">— Pending</div>
+            <div class="stat-desc">Pending roommate requests.</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stat-card h-100">
+            <div class="stat-icon icon-green"><i class="fa-solid fa-check-double"></i></div>
+            <div class="stat-title" id="statAccepted">— Accepted</div>
+            <div class="stat-desc">Matched roommate pairs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Upload Students ═══ -->
+    <div id="sectionUpload" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-label"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Student Dataset</div>
+      <div class="card" style="max-width:600px;">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">
+          Upload a <strong>CSV</strong> or <strong>JSON</strong> file with columns:
+          <code>name, sapId, universityEmail, password, hostelType</code>
+        </p>
+        <form id="uploadForm">
+          <div class="form-group">
+            <label class="form-label" for="uploadFile">Select File</label>
+            <input type="file" id="uploadFile" class="form-control" accept=".csv,.json" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100" id="uploadBtn">
+            <i class="fa-solid fa-cloud-arrow-up fa-sm"></i> Upload & Import
+          </button>
+        </form>
+        <div id="uploadResult" style="margin-top:16px;"></div>
+      </div>
+      <!-- Sample CSV template -->
+      <div class="card mt-3" style="max-width:600px;">
+        <div class="section-label" style="font-size:13px;"><i class="fa-solid fa-file-csv"></i> Sample CSV Format</div>
+        <pre style="font-size:12px;color:var(--text-2);background:var(--bg-2);padding:12px;border-radius:8px;overflow-x:auto;margin:0;">name,sapId,universityEmail,password,hostelType
+Alice Sharma,SAP101,alice@upes.ac.in,password123,Bidholi Boys Hostel
+Bob Kumar,SAP102,bob@upes.ac.in,password123,Bidholi Boys Hostel
+Diana Gupta,SAP103,diana@upes.ac.in,password123,Bidholi Girls Hostel</pre>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Wardens ═══ -->
+    <div id="sectionWardens" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-header">
+        <div class="section-label"><i class="fa-solid fa-user-shield"></i> Warden Management</div>
+      </div>
+      <!-- Assign warden form -->
+      <div class="card" style="max-width:500px;">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Assign a new warden to a hostel or elevate an existing user.</p>
+        <form id="wardenForm">
+          <div class="form-group">
+            <label class="form-label" for="wardenName">Name</label>
+            <input type="text" id="wardenName" class="form-control" placeholder="Warden name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wardenEmail">Email</label>
+            <input type="email" id="wardenEmail" class="form-control" placeholder="warden@upes.ac.in" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wardenPassword">Password</label>
+            <input type="password" id="wardenPassword" class="form-control" placeholder="Minimum 8 characters" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="wardenHostel">Assign to Hostel</label>
+            <select id="wardenHostel" class="form-select" required>
+              <option value="">Select hostel</option>
+              <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
+              <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100" id="wardenBtn">
+            <i class="fa-solid fa-user-shield fa-sm"></i> Assign Warden
+          </button>
+        </form>
+        <div id="wardenResult" style="margin-top:16px;"></div>
+      </div>
+      <!-- Wardens table -->
+      <div class="card mt-3" style="padding:0;overflow:hidden;">
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="wardensTable">
+            <thead>
+              <tr><th>ID</th><th>Name</th><th>Email</th><th>Hostel</th><th>Created</th></tr>
+            </thead>
+            <tbody id="wardensBody">
+              <tr><td colspan="5" class="table-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Students ═══ -->
+    <div id="sectionStudents" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-header">
+        <div class="section-label"><i class="fa-solid fa-users"></i> Student Directory</div>
+        <div class="admin-filters">
+          <select id="hostelFilter" class="form-select form-select-sm" style="width:auto;min-width:200px;" onchange="loadStudents()">
+            <option value="">All Hostels</option>
+            <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
+            <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="studentsTable">
+            <thead>
+              <tr><th>ID</th><th>Name</th><th>SAP ID</th><th>Email</th><th>Hostel</th><th>Profile</th></tr>
+            </thead>
+            <tbody id="studentsBody">
+              <tr><td colspan="6" class="table-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Requests ═══ -->
+    <div id="sectionRequests" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-header">
+        <div class="section-label"><i class="fa-solid fa-bell"></i> Roommate Requests</div>
+        <div class="admin-filters">
+          <select id="statusFilter" class="form-select form-select-sm" style="width:auto;min-width:180px;" onchange="loadRequests()">
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="ACCEPTED">Accepted</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Status</th><th>Created</th></tr>
+            </thead>
+            <tbody id="requestsBody">
+              <tr><td colspan="5" class="table-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION: Assign ═══ -->
+    <div id="sectionAssign" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
+      <div class="section-label"><i class="fa-solid fa-link"></i> Manual Roommate Assignment</div>
+      <div class="card" style="max-width:500px;">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:18px;">
+          Select two students to assign as roommates. Both must be in the same hostel.
+        </p>
+        <form id="assignForm">
+          <div class="form-group">
+            <label class="form-label" for="assignUser1">Student 1 (User ID)</label>
+            <input type="number" id="assignUser1" class="form-control" placeholder="Enter User ID" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="assignUser2">Student 2 (User ID)</label>
+            <input type="number" id="assignUser2" class="form-control" placeholder="Enter User ID" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-w100" id="assignBtn">
+            <i class="fa-solid fa-link fa-sm"></i> Assign Roommates
+          </button>
+        </form>
+        <div id="assignResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script src="script.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   Manager Dashboard — Inline Script
+   ═══════════════════════════════════════════════════ */
+
+// Verify user is manager
+(function() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'MANAGER') {
+    toast('Access denied. Manager only.', 'error');
+    setTimeout(() => window.location.href = 'dashboard.html', 800);
+  }
+})();
+
+// Section navigation
+function showSection(name) {
+  ['Overview','Upload','Wardens','Students','Requests','Assign'].forEach(s => {
+    const el = document.getElementById('section' + s);
+    if (el) el.style.display = 'none';
+  });
+  document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+
+  const target = document.getElementById('section' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (target) target.style.display = 'block';
+
+  const nav = document.getElementById('nav' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (nav) nav.classList.add('active');
+
+  if (name === 'students') loadStudents();
+  if (name === 'requests') loadRequests();
+  if (name === 'wardens') loadWardens();
+}
+
+// ── Stats ──
+async function loadStats() {
+  try {
+    const [studentsRes, wardensRes, pendingRes, acceptedRes] = await Promise.all([
+      api('/manager/students'),
+      api('/manager/wardens'),
+      api('/manager/requests?status=PENDING'),
+      api('/manager/requests?status=ACCEPTED'),
+    ]);
+    document.getElementById('statStudents').textContent = (studentsRes.data?.length || 0) + ' Students';
+    document.getElementById('statWardens').textContent  = (wardensRes.data?.length || 0) + ' Wardens';
+    document.getElementById('statPending').textContent   = (pendingRes.data?.length || 0) + ' Pending';
+    document.getElementById('statAccepted').textContent  = (acceptedRes.data?.length || 0) + ' Accepted';
+  } catch (_) {}
+}
+
+// ── Upload ──
+document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('uploadFile');
+  const resDiv = document.getElementById('uploadResult');
+
+  if (!fileInput.files.length) { toast('Please select a file.', 'error'); return; }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  setBtnLoading(btn, true);
+  try {
+    const token = getToken();
+    const res = await fetch(API + '/manager/upload-students', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: formData
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast(data.message || 'Upload failed', 'error');
+      if (resDiv) resDiv.innerHTML = `<div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:13px;color:var(--error);"><i class="fa-solid fa-times-circle"></i> ${data.message}</div>`;
+      return;
+    }
+
+    const r = data.data;
+    toast(`Upload complete! ${r.created} created, ${r.skipped} skipped.`);
+    if (resDiv) {
+      let html = `<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:13px;color:var(--success);">
+        <i class="fa-solid fa-check-circle"></i> <strong>${r.created}</strong> created, <strong>${r.skipped}</strong> skipped, <strong>${r.failed}</strong> failed (of ${r.totalRecords} records)
+      </div>`;
+      if (r.errors && r.errors.length > 0) {
+        html += `<div style="margin-top:8px;padding:10px;background:rgba(239,68,68,0.08);border-radius:8px;font-size:12px;color:var(--text-3);max-height:120px;overflow-y:auto;">
+          ${r.errors.map(e => '<div>⚠ ' + e + '</div>').join('')}
+        </div>`;
+      }
+      resDiv.innerHTML = html;
+    }
+    loadStats();
+    fileInput.value = '';
+  } catch (err) {
+    toast('Upload failed: ' + err.message, 'error');
+  } finally {
+    setBtnLoading(btn, false);
+  }
+});
+
+// ── Warden Assignment ──
+document.getElementById('wardenForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('wardenBtn');
+  const name = document.getElementById('wardenName').value.trim();
+  const email = document.getElementById('wardenEmail').value.trim();
+  const password = document.getElementById('wardenPassword').value;
+  const hostel = document.getElementById('wardenHostel').value;
+  const resDiv = document.getElementById('wardenResult');
+
+  if (!email || !password || !hostel) { toast('Fill all required fields.', 'error'); return; }
+
+  setBtnLoading(btn, true);
+  try {
+    const res = await api('/manager/assign-warden', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, hostel })
+    });
+    toast('Warden assigned successfully!');
+    if (resDiv) {
+      resDiv.innerHTML = `<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:13px;color:var(--success);">
+        <i class="fa-solid fa-check-circle"></i> ${res.data?.email} assigned to ${fmtHostel(res.data?.hostel)}
+      </div>`;
+    }
+    loadWardens();
+    loadStats();
+  } catch (_) {
+  } finally {
+    setBtnLoading(btn, false);
+  }
+});
+
+// ── Wardens Table ──
+async function loadWardens() {
+  const tbody = document.getElementById('wardensBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading…</td></tr>';
+  try {
+    const res = await api('/manager/wardens');
+    const wardens = res.data || [];
+    if (!wardens.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No wardens found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = wardens.map(w => `
+      <tr>
+        <td><span class="table-id">${w.id}</span></td>
+        <td>${w.name || '—'}</td>
+        <td>${w.email}</td>
+        <td><span class="badge ${w.hostel?.includes('BOYS') ? 'badge-boys' : 'badge-girls'}">${fmtHostel(w.hostel)}</span></td>
+        <td style="color:var(--text-3);font-size:12px;">${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Failed to load wardens</td></tr>';
+  }
+}
+
+// ── Students Table ──
+async function loadStudents() {
+  const tbody = document.getElementById('studentsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading…</td></tr>';
+  const hostel = document.getElementById('hostelFilter')?.value || '';
+  const url = '/manager/students' + (hostel ? '?hostel=' + hostel : '');
+  try {
+    const res = await api(url);
+    const students = res.data || [];
+    if (!students.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No students found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = students.map(s => `
+      <tr>
+        <td><span class="table-id">${s.id}</span></td>
+        <td>${s.name || '—'}</td>
+        <td>${s.sapId || '—'}</td>
+        <td>${s.email}</td>
+        <td><span class="badge ${s.hostel?.includes('BOYS') ? 'badge-boys' : 'badge-girls'}">${fmtHostel(s.hostel)}</span></td>
+        <td>${s.profileComplete
+          ? '<span style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Done</span>'
+          : '<span style="color:var(--text-3);"><i class="fa-regular fa-circle"></i> No</span>'}</td>
+      </tr>
+    `).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load students</td></tr>';
+  }
+}
+
+// ── Requests Table ──
+async function loadRequests() {
+  const tbody = document.getElementById('requestsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading…</td></tr>';
+  const status = document.getElementById('statusFilter')?.value || '';
+  const url = '/manager/requests' + (status ? '?status=' + status : '');
+  try {
+    const res = await api(url);
+    const requests = res.data || [];
+    if (!requests.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No requests found</td></tr>';
+      return;
+    }
+    tbody.innerHTML = requests.map(r => `
+      <tr>
+        <td><span class="table-id">${r.id}</span></td>
+        <td>${r.senderEmail || 'User #' + r.senderId}</td>
+        <td>${r.receiverEmail || 'User #' + r.receiverId}</td>
+        <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
+        <td style="color:var(--text-3);font-size:12px;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch (_) {
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">Failed to load requests</td></tr>';
+  }
+}
+
+// ── Assign Roommates ──
+document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('assignBtn');
+  const u1 = document.getElementById('assignUser1').value;
+  const u2 = document.getElementById('assignUser2').value;
+  const resDiv = document.getElementById('assignResult');
+  if (!u1 || !u2) { toast('Please enter both user IDs.', 'error'); return; }
+  setBtnLoading(btn, true);
+  try {
+    const res = await api('/manager/assign-roommates', {
+      method: 'POST',
+      body: JSON.stringify({ userId1: parseInt(u1), userId2: parseInt(u2) })
+    });
+    toast('Roommates assigned successfully!');
+    if (resDiv) {
+      resDiv.innerHTML = `<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:13px;color:var(--success);">
+        <i class="fa-solid fa-check-circle"></i> Assigned: User #${u1} ↔ User #${u2} (Request #${res.data?.id})
+      </div>`;
+    }
+    loadStats();
+  } catch (_) {} finally { setBtnLoading(btn, false); }
+});
+
+// Helpers
+function fmtHostel(h) {
+  if (!h) return '—';
+  return h.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Init
+loadStats();
+</script>
+</body>
+</html>

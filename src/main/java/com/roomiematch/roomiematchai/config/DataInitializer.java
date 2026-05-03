@@ -12,7 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
- * Seeds the database with test users, admin accounts, and profiles on first startup.
+ * Seeds the database with test users on first startup.
+ * Creates: 1 MANAGER, 2 WARDENs, 5 STUDENTs (3 boys + 2 girls).
  * Only runs if no users exist in the database (safe for re-runs).
  */
 @Component
@@ -35,87 +36,99 @@ public class DataInitializer implements CommandLineRunner {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        log.info("Starting DataInitializer...");
+    }
+
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void run(String... args) {
+        log.info("Cleaning database via native queries for hierarchical system migration...");
         try {
-            jdbcTemplate.execute("ALTER TABLE users MODIFY COLUMN role VARCHAR(255)");
-            log.info("Successfully altered 'role' column to VARCHAR(255).");
+            // Using native queries to avoid JPA mapping issues with old enum values like 'USER'
+            userRepository.clearRequests();
+            userRepository.clearProfiles();
+            userRepository.alterRoleColumn();
+            userRepository.deleteAllNative();
+            log.info("Database cleaned successfully.");
         } catch (Exception e) {
-            log.warn("Could not alter 'role' column (might already be correct): {}", e.getMessage());
+            log.warn("Failed to clean database (might be empty): {}", e.getMessage());
         }
 
-        log.info("Seeding database with demo users, admins, and profiles if they do not exist...");
+        log.info("Seeding database with demo users (MANAGER, WARDENs, STUDENTs)...");
 
-        // ── Admin Accounts ──────────────────────────────
-        if (userRepository.findByEmail("admin@upes.ac.in").isEmpty()) {
-            createAdmin("admin@upes.ac.in", "admin123", Role.ADMIN, "UPES", null);
-        }
+        // ── Manager (Hostel Manager — top admin) ────────
+        createUser("Hostel Manager", "manager@upes.ac.in", "admin123", null,
+                   Role.MANAGER, "UPES", null, null);
 
-        if (userRepository.findByEmail("admin.boys@upes.ac.in").isEmpty()) {
-            createAdmin("admin.boys@upes.ac.in", "admin123", Role.HOSTEL_ADMIN, "UPES", "BIDHOLI_BOYS_HOSTEL");
-        }
+        // ── Wardens (one per hostel) ────────────────────
+        createUser("Boys Hostel Warden", "warden.boys@upes.ac.in", "admin123", null,
+                   Role.WARDEN, "UPES", "BIDHOLI_BOYS_HOSTEL", null);
 
-        if (userRepository.findByEmail("admin.girls@upes.ac.in").isEmpty()) {
-            createAdmin("admin.girls@upes.ac.in", "admin123", Role.HOSTEL_ADMIN, "UPES", "BIDHOLI_GIRLS_HOSTEL");
-        }
+        createUser("Girls Hostel Warden", "warden.girls@upes.ac.in", "admin123", null,
+                   Role.WARDEN, "UPES", "BIDHOLI_GIRLS_HOSTEL", null);
 
-        // ── Demo Users (Boys Hostel) ─────────────────────
-        String[][] boysUsers = {
-            {"alice@university.edu",   "password123"},
-            {"bob@university.edu",     "password123"},
-            {"charlie@university.edu", "password123"},
+        // ── Demo Students (Boys Hostel) ─────────────────
+        String[][] boysData = {
+            {"Alice Sharma",   "alice@university.edu",   "password123", "SAP001"},
+            {"Bob Kumar",      "bob@university.edu",     "password123", "SAP002"},
+            {"Charlie Singh",  "charlie@university.edu", "password123", "SAP003"},
         };
         String[][] boysProfiles = {
-            {"EARLY_BIRD", "VERY_CLEAN", "SILENT",     "INTROVERT", "IN_ROOM",  "RARELY",    "COOL"},
-            {"NIGHT_OWL",  "MODERATE",   "LOUD_OK",    "EXTROVERT", "LIBRARY",  "OFTEN",     "WARM"},
-            {"FLEXIBLE",   "VERY_CLEAN", "MODERATE",   "AMBIVERT",  "FLEXIBLE", "SOMETIMES", "MODERATE"},
+            {"EARLY_BIRD", "VERY_CLEAN", "SILENT",   "INTROVERT", "IN_ROOM",  "RARELY",    "COOL"},
+            {"NIGHT_OWL",  "MODERATE",   "LOUD_OK",  "EXTROVERT", "LIBRARY",  "OFTEN",     "WARM"},
+            {"FLEXIBLE",   "VERY_CLEAN", "MODERATE", "AMBIVERT",  "FLEXIBLE", "SOMETIMES", "MODERATE"},
         };
-        for (int i = 0; i < boysUsers.length; i++) {
-            if (userRepository.findByEmail(boysUsers[i][0]).isEmpty()) {
-                createUserWithProfile(boysUsers[i][0], boysUsers[i][1], "UPES", "BIDHOLI_BOYS_HOSTEL", boysProfiles[i]);
-            }
+        for (int i = 0; i < boysData.length; i++) {
+            User u = createUser(boysData[i][0], boysData[i][1], boysData[i][2], boysData[i][3],
+                                Role.STUDENT, "UPES", "BIDHOLI_BOYS_HOSTEL", null);
+            createProfile(u, boysProfiles[i]);
         }
 
-        // ── Demo Users (Girls Hostel) ────────────────────
-        String[][] girlsUsers = {
-            {"diana@university.edu",   "password123"},
-            {"ethan@university.edu",   "password123"},
+        // ── Demo Students (Girls Hostel) ────────────────
+        String[][] girlsData = {
+            {"Diana Gupta",  "diana@university.edu", "password123", "SAP004"},
+            {"Eva Patel",    "eva@university.edu",   "password123", "SAP005"},
         };
         String[][] girlsProfiles = {
-            {"EARLY_BIRD", "MODERATE",   "SILENT",     "AMBIVERT",  "IN_ROOM",  "RARELY",    "COOL"},
-            {"NIGHT_OWL",  "RELAXED",    "LOUD_OK",    "EXTROVERT", "LIBRARY",  "OFTEN",     "WARM"},
+            {"EARLY_BIRD", "MODERATE", "SILENT",  "AMBIVERT",  "IN_ROOM", "RARELY", "COOL"},
+            {"NIGHT_OWL",  "RELAXED",  "LOUD_OK", "EXTROVERT", "LIBRARY", "OFTEN",  "WARM"},
         };
-        for (int i = 0; i < girlsUsers.length; i++) {
-            if (userRepository.findByEmail(girlsUsers[i][0]).isEmpty()) {
-                createUserWithProfile(girlsUsers[i][0], girlsUsers[i][1], "UPES", "BIDHOLI_GIRLS_HOSTEL", girlsProfiles[i]);
-            }
+        for (int i = 0; i < girlsData.length; i++) {
+            User u = createUser(girlsData[i][0], girlsData[i][1], girlsData[i][2], girlsData[i][3],
+                                Role.STUDENT, "UPES", "BIDHOLI_GIRLS_HOSTEL", null);
+            createProfile(u, girlsProfiles[i]);
         }
 
-        log.info("Seed data complete.");
+        log.info("═══════════════════════════════════════");
+        log.info("  Seed data complete.");
+        log.info("  Manager:  manager@upes.ac.in / admin123");
+        log.info("  Warden:   warden.boys@upes.ac.in / admin123");
+        log.info("  Warden:   warden.girls@upes.ac.in / admin123");
+        log.info("  Student:  alice@university.edu / password123");
+        log.info("═══════════════════════════════════════");
     }
 
-    private void createAdmin(String email, String password, Role role, String org, String hostel) {
-        User admin = new User();
-        admin.setEmail(email);
-        admin.setPassword(passwordEncoder.encode(password));
-        admin.setRole(role);
-        admin.setOrganization(org);
-        admin.setHostel(hostel);
-        userRepository.save(admin);
-        log.info("  Created {} : {}", role, email);
-    }
-
-    private void createUserWithProfile(String email, String password, String org, String hostel, String[] profile) {
+    private User createUser(String name, String email, String password, String sapId,
+                            Role role, String org, String hostel, Long createdBy) {
         User user = new User();
+        user.setName(name);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(Role.USER);
+        user.setSapId(sapId);
+        user.setRole(role);
         user.setOrganization(org);
         user.setHostel(hostel);
+        user.setCreatedBy(createdBy);
         User saved = userRepository.save(user);
+        log.info("  Created {} : {} ({})", role, email, hostel != null ? hostel : "ALL");
+        return saved;
+    }
 
+    private void createProfile(User user, String[] profile) {
         StudentProfile sp = new StudentProfile();
-        sp.setUser(saved);
+        sp.setUser(user);
         sp.setSleepSchedule(profile[0]);
         sp.setCleanlinessLevel(profile[1]);
         sp.setNoiseTolerance(profile[2]);
@@ -124,7 +137,5 @@ public class DataInitializer implements CommandLineRunner {
         sp.setGuestFrequency(profile[5]);
         sp.setRoomTemperature(profile[6]);
         profileRepository.save(sp);
-
-        log.info("  Created user: {} ({}/{})", email, org, hostel);
     }
 }

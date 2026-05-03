@@ -25,7 +25,7 @@ const getToken     = ()  => localStorage.getItem('jwt');
 const setToken     = (t) => localStorage.setItem('jwt', t);
 const clearToken   = ()  => localStorage.removeItem('jwt');
 const getUserEmail = ()  => localStorage.getItem('userEmail') || '';
-const getUserRole  = ()  => localStorage.getItem('userRole') || 'USER';
+const getUserRole  = ()  => localStorage.getItem('userRole') || 'STUDENT';
 
 /* ── Toast ────────────────────────────────────────── */
 function toast(msg, type = 'success') {
@@ -81,7 +81,9 @@ function checkAuth() {
   if (!token && !isPublic) { window.location.href = 'index.html'; return false; }
   if (token  && isPublic)  {
     const role = getUserRole();
-    if (role === 'ADMIN' || role === 'HOSTEL_ADMIN') {
+    if (role === 'MANAGER') {
+      window.location.href = 'manager.html';
+    } else if (role === 'WARDEN') {
       window.location.href = 'admin.html';
     } else {
       window.location.href = 'dashboard.html';
@@ -109,16 +111,19 @@ function initSidebar() {
   if (av) av.textContent = initials;
   if (em) em.textContent = email || 'user@app.com';
 
-  // Show admin link in sidebar for admin users
+  // Show admin/manager link in sidebar for admin users
   const role = getUserRole();
-  if ((role === 'ADMIN' || role === 'HOSTEL_ADMIN') && !window.location.pathname.endsWith('admin.html')) {
+  const isAdminPage = window.location.pathname.endsWith('admin.html') || window.location.pathname.endsWith('manager.html');
+  if ((role === 'MANAGER' || role === 'WARDEN') && !isAdminPage) {
     const nav = document.querySelector('.sidebar-nav');
     const divider = document.querySelector('.nav-divider');
     if (nav && divider) {
       const adminLink = document.createElement('a');
-      adminLink.href = 'admin.html';
+      adminLink.href = role === 'MANAGER' ? 'manager.html' : 'admin.html';
       adminLink.className = 'nav-item';
-      adminLink.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Admin Panel';
+      adminLink.innerHTML = role === 'MANAGER'
+        ? '<i class="fa-solid fa-crown"></i> Manager Panel'
+        : '<i class="fa-solid fa-shield-halved"></i> Warden Panel';
       adminLink.style.color = '#ef4444';
       nav.insertBefore(adminLink, divider);
     }
@@ -174,9 +179,12 @@ function initLoginPage() {
         setToken(d.token);
         localStorage.setItem('userId', d.userId);
         localStorage.setItem('userEmail', d.email);
-        localStorage.setItem('userRole', d.role || 'USER');
+        localStorage.setItem('userRole', d.role || 'STUDENT');
+        if (d.hostel) localStorage.setItem('userHostel', d.hostel);
         toast('Welcome back, ' + d.email + '!');
-        const dest = (d.role === 'ADMIN' || d.role === 'HOSTEL_ADMIN') ? 'admin.html' : 'dashboard.html';
+        let dest = 'dashboard.html';
+        if (d.role === 'MANAGER') dest = 'manager.html';
+        else if (d.role === 'WARDEN') dest = 'admin.html';
         setTimeout(() => window.location.href = dest, 700);
       } else {
         throw new Error('Unexpected response from server.');

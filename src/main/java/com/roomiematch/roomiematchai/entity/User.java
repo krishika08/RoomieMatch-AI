@@ -17,6 +17,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column
+    private String name;
+
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -24,14 +27,21 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true)
+    private String sapId;
+
     @Enumerated(EnumType.STRING)
-    private Role role = Role.USER;
+    private Role role = Role.STUDENT;
 
     @Column
     private String organization;
 
     @Column
     private String hostel;
+
+    /** ID of the user who created this account (for hierarchy tracking). */
+    @Column(name = "created_by")
+    private Long createdBy;
 
     @Column(name = "created_at", updatable = false)
     private java.time.LocalDateTime createdAt;
