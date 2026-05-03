@@ -3,35 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - RoomieMatch AI</title>
+    <title>Welcome Back — RoomieMatch AI</title>
 </head>
 <body>
+    <!-- Full screen centered container -->
     <div class="login-container">
+        
+        <!-- Centered login card -->
         <main class="login-card">
-            <header>
-                <h1>RoomieMatch AI</h1>
-                <p>Sign in to your account</p>
+            
+            <!-- Clear headings and subtle context -->
+            <header class="card-header">
+                <h1 class="heading">Welcome Back</h1>
+                <p class="sub-heading">Sign in to RoomieMatch AI to continue.</p>
             </header>
 
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" class="input-field" placeholder="email@example.com" required>
-                </div>
+            <!-- Clean form layout -->
+            <section class="card-body">
+                <form id="loginForm">
+                    
+                    <!-- Form group for spacing and alignment -->
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" id="email" class="input-field" placeholder="you@university.edu" required aria-describedby="emailHelp">
+                        <small id="emailHelp" class="helper-text">Please use your official university email.</small>
+                    </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
-                </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
+                    </div>
 
-                <button type="submit" id="loginBtn" class="login-button">
-                    Login
-                </button>
-            </form>
+                    <div class="form-actions">
+                        <button type="submit" id="loginBtn" class="login-button">
+                            Sign In
+                        </button>
+                    </div>
+                    
+                </form>
+            </section>
 
-            <footer>
-                <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+            <!-- Balanced footer -->
+            <footer class="card-footer">
+                <p class="footer-text">
+                    Don't have an account? <a href="signup.html" class="link">Create one</a>
+                </p>
             </footer>
+
         </main>
     </div>
 
