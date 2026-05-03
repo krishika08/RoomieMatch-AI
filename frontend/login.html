@@ -4,6 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Back — RoomieMatch AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
+            color: #1E293B;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            box-sizing: border-box;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .login-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02);
+            padding: 40px;
+            box-sizing: border-box;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .heading {
+            margin: 0 0 8px 0;
+            font-size: 26px;
+            font-weight: 600;
+            color: #0F172A;
+            letter-spacing: -0.02em;
+        }
+
+        .sub-heading {
+            margin: 0;
+            font-size: 15px;
+            color: #64748B;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            color: #0F172A;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: #94A3B8;
+        }
+
+        .input-field:focus {
+            background-color: #FFFFFF;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+        }
+
+        .helper-text {
+            display: block;
+            margin-top: 6px;
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        .form-actions {
+            margin-top: 32px;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 13px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: inherit;
+            color: #FFFFFF;
+            background-color: #0F172A;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .login-button:hover {
+            background-color: #334155;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -2px rgba(15, 23, 42, 0.15);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .card-footer {
+            margin-top: 28px;
+            text-align: center;
+        }
+
+        .footer-text {
+            margin: 0;
+            font-size: 14px;
+            color: #64748B;
+        }
+
+        .link {
+            color: #3B82F6;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .link:hover {
+            color: #2563EB;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <!-- Full screen centered container -->
