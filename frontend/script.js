@@ -40,7 +40,11 @@ function toast(msg, type = 'success') {
   el.className = `toast-item ${type}`;
   el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} fa-sm"></i><span>${msg}</span>`;
   stack.appendChild(el);
-  setTimeout(() => el.remove(), 3800);
+  // Animate out before removing
+  setTimeout(() => {
+    el.classList.add('removing');
+    setTimeout(() => el.remove(), 320);
+  }, 3500);
 }
 
 /* ── API helper ───────────────────────────────────── */
@@ -55,7 +59,8 @@ async function api(endpoint, options = {}) {
     const res  = await fetch(`${API}${endpoint}`, { ...options, headers });
     if (res.status === 401) {
       clearToken();
-      window.location.href = 'index.html';
+      toast('Your session has expired. Redirecting to login…', 'info');
+      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
       throw new Error('Session expired');
     }
     const ct   = res.headers.get('content-type') || '';
@@ -136,16 +141,57 @@ function setBtnLoading(btn, loading) {
   btn.disabled = loading;
   if (loading) {
     btn.dataset.orig = btn.innerHTML;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Loading…`;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Loading…`;
+    btn.style.opacity = '0.8';
   } else {
     btn.innerHTML = btn.dataset.orig || 'Submit';
+    btn.style.opacity = '';
   }
+}
+
+/* ── Set button success state briefly ─────────────── */
+function setBtnSuccess(btn, label = '<i class="fa-solid fa-check"></i> Saved') {
+  if (!btn) return;
+  const orig = btn.dataset.orig || btn.innerHTML;
+  btn.innerHTML = label;
+  btn.style.background = '#10B981';
+  btn.style.color = '#fff';
+  setTimeout(() => {
+    btn.innerHTML = orig;
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.disabled = false;
+  }, 2000);
+}
+
+/* ── Field-level validation helpers ───────────────── */
+function fieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('field-invalid');
+  let err = el.parentElement.querySelector('.field-error-msg');
+  if (!err) {
+    err = document.createElement('div');
+    err.className = 'field-error-msg';
+    el.parentElement.appendChild(err);
+  }
+  err.textContent = msg;
+}
+
+function clearFieldErrors(...ids) {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('field-invalid');
+    el.parentElement.querySelector('.field-error-msg')?.remove();
+  });
 }
 
 /* ── Boot ─────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   if (!checkAuth()) return;
   if (typeof AOS !== 'undefined') AOS.refresh();
+
   initSidebar();
   initLoginPage();
   initSignupPage();
@@ -165,14 +211,21 @@ function initLoginPage() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn      = document.getElementById('loginBtn');
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    const emailEl  = document.getElementById('email');
+    const passEl   = document.getElementById('password');
+    const email    = emailEl?.value.trim();
+    const password = passEl?.value;
 
-    if (!email || !password) { toast('Please fill in all fields.', 'error'); return; }
+    clearFieldErrors('email', 'password');
+
+    let valid = true;
+    if (!email) { fieldError('email', 'Email is required'); valid = false; }
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { fieldError('email', 'Enter a valid email address'); valid = false; }
+    if (!password) { fieldError('password', 'Password is required'); valid = false; }
+    if (!valid) return;
 
     setBtnLoading(btn, true);
     try {
-      // Response: ApiResponse<LoginResponseDTO>  → { success, message, data: { token, userId, email, role } }
       const res = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
       const d   = res.data;
       if (d && d.token) {
@@ -181,11 +234,11 @@ function initLoginPage() {
         localStorage.setItem('userEmail', d.email);
         localStorage.setItem('userRole', d.role || 'STUDENT');
         if (d.hostel) localStorage.setItem('userHostel', d.hostel);
-        toast('Welcome back, ' + d.email + '!');
+        toast('Welcome back! Redirecting…');
         let dest = 'dashboard.html';
         if (d.role === 'MANAGER') dest = 'manager.html';
         else if (d.role === 'WARDEN') dest = 'admin.html';
-        setTimeout(() => window.location.href = dest, 700);
+        setTimeout(() => window.location.href = dest, 800);
       } else {
         throw new Error('Unexpected response from server.');
       }
@@ -205,21 +258,27 @@ function initSignupPage() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn          = document.getElementById('signupBtn');
-    const email        = document.getElementById('regEmail').value.trim();
-    const password     = document.getElementById('regPassword').value;
+    const email        = document.getElementById('regEmail')?.value.trim();
+    const password     = document.getElementById('regPassword')?.value;
     const organization = document.getElementById('regOrganization')?.value || '';
     const hostel       = document.getElementById('regHostel')?.value || '';
 
-    if (!email || !password) { toast('Please fill in all fields.', 'error'); return; }
-    if (password.length < 8) { toast('Password must be at least 8 characters.', 'error'); return; }
-    if (!organization) { toast('Please select your organization.', 'error'); return; }
-    if (!hostel) { toast('Please select your hostel.', 'error'); return; }
+    clearFieldErrors('regEmail', 'regPassword', 'regOrganization', 'regHostel');
+
+    let valid = true;
+    if (!email) { fieldError('regEmail', 'Email is required'); valid = false; }
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { fieldError('regEmail', 'Enter a valid email address'); valid = false; }
+    if (!password) { fieldError('regPassword', 'Password is required'); valid = false; }
+    else if (password.length < 8) { fieldError('regPassword', 'Must be at least 8 characters'); valid = false; }
+    if (!organization) { fieldError('regOrganization', 'Please select your organization'); valid = false; }
+    if (!hostel) { fieldError('regHostel', 'Please select your hostel'); valid = false; }
+    if (!valid) return;
 
     setBtnLoading(btn, true);
     try {
       await api('/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, organization, hostel }) });
-      toast('Account created! Please sign in.');
-      setTimeout(() => window.location.href = 'index.html', 1000);
+      toast('Account created! Redirecting to sign in…');
+      setTimeout(() => window.location.href = 'index.html', 1200);
     } catch (_) {
       setBtnLoading(btn, false);
     }
@@ -233,6 +292,39 @@ function initDashboardPage() {
   const el = document.getElementById('dashEmail');
   if (!el) return;
   el.textContent = getUserEmail() || 'there';
+
+  // Load live stats to make dashboard feel alive
+  setTimeout(async () => {
+    try {
+      // 1. Profile Status
+      try {
+        await api('/profile');
+        const sp = document.getElementById('statProfile');
+        if (sp) sp.innerHTML = `<span class="status-badge badge-success"><i class="fa-solid fa-check" style="margin-right:4px;"></i> Complete</span>`;
+      } catch (e) {}
+
+      // 2. Matches Found
+      try {
+        const matches = await api('/matches');
+        const sm = document.getElementById('statMatches');
+        if (sm && matches.data) sm.textContent = matches.data.length;
+      } catch (e) {}
+
+      // 3. Requests Sent & Accepted
+      try {
+        const inc = await api('/requests/incoming');
+        const snt = await api('/requests/sent');
+        if (inc.data && snt.data) {
+          const accepted = inc.data.filter(r => r.status === 'ACCEPTED').length + snt.data.filter(r => r.status === 'ACCEPTED').length;
+          const sentCount = snt.data.length;
+          if (document.getElementById('statSent')) document.getElementById('statSent').textContent = sentCount;
+          if (document.getElementById('statAccepted')) document.getElementById('statAccepted').textContent = accepted;
+        }
+      } catch (e) {}
+    } catch (e) {
+      console.error("Dashboard stats error", e);
+    }
+  }, 100);
 }
 
 /* ════════════════════════════════════════════════════
@@ -261,7 +353,7 @@ function initProfilePage() {
           if (el && profile[f]) el.value = profile[f];
         });
         if (statusEl) {
-          statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Preferences loaded`;
+          statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#10B981;"></i> Preferences loaded`;
         }
       }
     } catch (_) {
@@ -273,28 +365,32 @@ function initProfilePage() {
     e.preventDefault();
     const btn = document.getElementById('saveProfileBtn');
 
-    // Validate all fields filled
     const payload = {};
-    let missing = false;
+    let firstMissing = null;
+    clearFieldErrors(...FIELDS);
+
     FIELDS.forEach(f => {
       const val = document.getElementById(f)?.value;
-      if (!val) missing = true;
+      if (!val && !firstMissing) firstMissing = f;
+      if (!val) fieldError(f, 'Please select an option');
       payload[f] = val;
     });
-    if (missing) { toast('Please fill in all preferences.', 'error'); return; }
+    if (firstMissing) {
+      document.getElementById(firstMissing)?.focus();
+      return;
+    }
 
     setBtnLoading(btn, true);
     try {
       const method = profileExists ? 'PUT' : 'POST';
       await api('/profile', { method, body: JSON.stringify(payload) });
       profileExists = true;
-      toast('Preferences saved successfully!');
       if (statusEl) {
-        statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Preferences saved`;
+        statusEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#10B981;"></i> All preferences saved`;
       }
+      setBtnSuccess(btn, '<i class="fa-solid fa-check"></i> Saved!');
     } catch (_) {
       // error already shown by api()
-    } finally {
       setBtnLoading(btn, false);
     }
   });
@@ -312,14 +408,28 @@ function initMatchesPage() {
 async function loadMatches() {
   const c = document.getElementById('matchesContainer');
   if (!c) return;
-  c.innerHTML = `<div class="col-12"><div class="spinner-wrap"><div class="spinner-ring"></div></div></div>`;
+  // Skeleton loaders
+  c.innerHTML = [1,2,3].map(() => `
+    <div class="col-md-6 col-xl-4">
+      <div class="match-card" style="padding:0;overflow:hidden;border:1px solid var(--border-light, #e5e7eb);">
+        <div class="skeleton-block" style="height:80px;margin:18px 18px 12px;"></div>
+        <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:8px;">
+          <div class="skeleton-block" style="height:12px;width:100%;"></div>
+          <div class="skeleton-block" style="height:12px;width:70%;"></div>
+          <div class="skeleton-block" style="height:36px;margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>`).join('');
   try {
     const res     = await api('/matches');
     const matches = res.data;
 
     if (!Array.isArray(matches) || !matches.length) {
-      c.innerHTML = emptyCard('No Matches Found',
-        'Complete your profile so the AI engine can find compatible roommates for you.');
+      c.innerHTML = emptyCard(
+        'No Matches Found',
+        'Complete your profile so the AI engine can find compatible roommates for you.',
+        { label: 'Go to Profile', href: 'profile.html', icon: 'fa-user-pen' }
+      );
       return;
     }
 
@@ -363,9 +473,8 @@ async function loadMatches() {
             ${traitRow('Guests', m.guestFrequency, m.breakdown, 'guestFrequency', 10)}
             ${traitRow('Temp', m.roomTemperature, m.breakdown, 'roomTemperature', 5)}
           </div>
-          <div class="divider"></div>
           <div style="padding:14px 18px 18px;">
-            <button id="req-btn-${m.userId}" class="btn btn-primary btn-sm w-full"
+            <button id="req-btn-${m.userId}" class="btn-match"
                     onclick="sendRequest(${m.userId}, this)">
               <i class="fa-solid fa-paper-plane fa-xs"></i> Send Request
             </button>
@@ -376,19 +485,25 @@ async function loadMatches() {
 
     if (typeof AOS !== 'undefined') AOS.refresh();
   } catch (_) {
-    c.innerHTML = emptyCard('Could Not Load Matches',
-      'Make sure your profile is saved and the backend is running.');
+    c.innerHTML = emptyCard(
+      'Could Not Load Matches',
+      'Make sure your profile is saved and the backend is running.',
+      { label: 'Refresh', href: '#', icon: 'fa-rotate-right', onclick: 'loadMatches()' }
+    );
   }
 }
 
 window.sendRequest = async (receiverId, btn) => {
   const orig = btn?.innerHTML;
-  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`; }
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin fa-xs"></i> Sending…`; }
   try {
-    // POST /requests/send  body: { receiverId }
     await api('/requests/send', { method: 'POST', body: JSON.stringify({ receiverId }) });
-    toast('Roommate request sent!');
-    if (btn) { btn.innerHTML = `<i class="fa-solid fa-check fa-xs"></i> Sent`; btn.style.background = 'var(--success)'; }
+    toast('Roommate request sent! 🎉');
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check fa-xs"></i> Sent`;
+      btn.style.background = '#10B981';
+      btn.style.boxShadow = '0 4px 12px rgba(16,185,129,0.4)';
+    }
   } catch (_) {
     if (btn) { btn.disabled = false; btn.innerHTML = orig; }
   }
@@ -420,7 +535,11 @@ async function loadIncoming() {
     const reqs = res.data;
 
     if (!Array.isArray(reqs) || !reqs.length) {
-      c.innerHTML = emptyCard('No Incoming Requests', 'When someone sends you a request, it will appear here.');
+      c.innerHTML = emptyCard(
+        'No Incoming Requests',
+        'When someone sends you a request, it will appear here.',
+        { label: 'View Your Matches', href: 'matches.html', icon: 'fa-handshake' }
+      );
       return;
     }
 
@@ -429,7 +548,7 @@ async function loadIncoming() {
       const bc   = badgeClass(r.status);
       const pend = r.status === 'PENDING';
       return `
-      <div class="req-card" data-aos="fade-up" data-aos-delay="${i * 60}">
+      <div class="req-card" id="req-card-${r.id}" data-aos="fade-up" data-aos-delay="${i * 60}">
         <div class="req-left">
           <div class="req-avatar">${init}</div>
           <div>
@@ -464,7 +583,11 @@ async function loadSent() {
     const reqs = res.data;
 
     if (!Array.isArray(reqs) || !reqs.length) {
-      c.innerHTML = emptyCard('No Sent Requests', "You haven't sent any requests yet. Browse your matches!");
+      c.innerHTML = emptyCard(
+        'No Sent Requests',
+        "You haven't sent any requests yet. Browse your matches and connect!",
+        { label: 'Browse Matches', href: 'matches.html', icon: 'fa-handshake' }
+      );
       return;
     }
 
@@ -491,37 +614,38 @@ async function loadSent() {
 
 // PUT /requests/respond  body: { requestId, status }
 window.respond = async (requestId, status, btn) => {
-  if (btn) { btn.disabled = true; }
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin fa-xs"></i>`;
+  }
   try {
     await api('/requests/respond', {
       method: 'PUT',
       body: JSON.stringify({ requestId, status })
     });
     toast(
-      status === 'ACCEPTED' ? 'Request accepted!' : 'Request declined.',
+      status === 'ACCEPTED' ? '✓ Request accepted!' : 'Request declined.',
       status === 'ACCEPTED' ? 'success' : 'info'
     );
-    loadIncoming();
+    // Animate card out before reload
+    const card = document.getElementById(`req-card-${requestId}`);
+    if (card) {
+      card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(20px)';
+      setTimeout(() => loadIncoming(), 350);
+    } else {
+      loadIncoming();
+    }
   } catch (_) {
-    if (btn) { btn.disabled = false; }
+    if (btn) { btn.disabled = false; btn.innerHTML = btn.dataset.orig || 'Accept'; }
   }
 };
 
 /* ── Helpers ──────────────────────────────────────── */
-/** Renders a single trait row with preference value + per-trait score mini-bar */
+/** Renders a single trait row with preference value */
 function traitRow(label, value, breakdown, key, max) {
-  const earned = (breakdown && breakdown[key] != null) ? breakdown[key] : null;
-  const pct = earned !== null ? Math.round((earned / max) * 100) : null;
-  const barColor = pct === null ? '' : pct >= 80 ? 'var(--success)' : pct >= 50 ? '#f59e0b' : 'var(--error)';
-  const scoreHtml = pct !== null
-    ? `<div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
-         <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
-           <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
-         </div>
-         <span style="font-size:10px;color:var(--text-3);min-width:28px;text-align:right;">${earned}/${max}</span>
-       </div>`
-    : '';
-  return `<div class="trait"><div class="t-label">${label}</div><div class="t-value">${fmt(value)}${scoreHtml}</div></div>`;
+  return `<div class="trait"><div class="t-label">${label}</div><div class="t-value">${fmt(value)}</div></div>`;
 }
 
 function fmt(val) {
@@ -535,13 +659,20 @@ function badgeClass(status) {
   return 'badge-pending';
 }
 
-function emptyCard(title, desc) {
+function emptyCard(title, desc, cta = null) {
+  const ctaHtml = cta
+    ? `<a href="${cta.href}" class="btn btn-secondary btn-sm" style="margin-top:16px;display:inline-flex;" ${
+        cta.onclick ? `onclick="${cta.onclick};return false;"` : ''}>
+        <i class="fa-solid ${cta.icon} fa-sm"></i> ${cta.label}
+      </a>`
+    : '';
   return `
     <div class="card">
       <div class="empty-state">
         <div class="ei"><i class="fa-regular fa-folder-open"></i></div>
         <h4>${title}</h4>
         <p>${desc}</p>
+        ${ctaHtml}
       </div>
     </div>`;
 }

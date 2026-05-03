@@ -3,259 +3,518 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin Dashboard — RoomieMatch AI</title>
-  <meta name="description" content="Admin dashboard for managing students, requests, and roommate assignments.">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <title>Warden Dashboard — RoomieMatch AI</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <link href="style.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="script.js"></script>
+  <style>
+    /* =========================================
+       STRUCTURAL DASHBOARD REFINEMENT
+       ========================================= */
+    :root {
+      --bg-body: #F9FAFB;
+      --bg-surface: #FFFFFF;
+      --border-light: #E5E7EB;
+      --border-hover: #D1D5DB;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --text-lighter: #9CA3AF;
+      --primary: #111827; /* Strict high-contrast primary */
+      --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      --transition: all 0.2s ease;
+      
+      --spacing-section: 48px; /* Massive spacing rule */
+      --spacing-card: 20px;
+    }
+
+    /* Animations */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-in {
+      animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout structure */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 100vh;
+      z-index: 10;
+    }
+
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Navbar */
+    .topbar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .topbar-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .topbar-title span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text-main);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border-light);
+    }
+    .user-email { font-size: 0.875rem; font-weight: 500; color: var(--text-main); }
+
+    /* Sidebar Content */
+    .sidebar-brand {
+      height: 64px; display: flex; align-items: center; padding: 0 1.5rem;
+      font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border-light); gap: 0.5rem;
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .nav-group-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-lighter);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 1.5rem 1.5rem 0.5rem;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.625rem 1.5rem; margin: 0.125rem 0.5rem; border-radius: 6px;
+      color: var(--text-muted); text-decoration: none;
+      font-weight: 500; font-size: 0.9rem;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative;
+    }
+    .nav-item i { font-size: 1rem; width: 16px; text-align: center; }
+    
+    .nav-item:hover { color: var(--text-main); background: #F3F4F6; transform: translateX(4px); }
+
+    .nav-item.active { color: var(--text-main); font-weight: 600; background: #F3F4F6; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: -0.5rem; top: 10%; bottom: 10%;
+      width: 4px; background: var(--primary); border-radius: 0 4px 4px 0;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1; overflow-y: auto; padding: 2.5rem 3rem; background: var(--bg-body);
+    }
+    .main-content::-webkit-scrollbar { width: 6px; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    /* Section Grouping Constraints */
+    .section-wrapper {
+      max-width: 1200px;
+      margin-bottom: var(--spacing-section);
+    }
+
+    /* Main Title Section */
+    .page-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text-main); line-height: 1.2; letter-spacing: -0.02em; }
+    .page-header p { font-size: 1rem; color: var(--text-muted); margin-top: 0.35rem; }
+
+    /* Stats Section (Clean Row) */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+    }
+    .stat-card {
+      background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px;
+      padding: var(--spacing-card); display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden; box-shadow: var(--shadow-subtle); transition: all 0.3s ease;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #111827, #6B7280); opacity: 0; transition: opacity 0.3s ease;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); }
+    .stat-card:hover::before { opacity: 1; }
+    
+    .stat-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 1rem; }
+    .stat-value { font-size: 2.75rem; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 0.5rem; letter-spacing: -0.04em; }
+    .stat-desc { font-size: 0.85rem; color: var(--text-lighter); }
+
+    /* Quick Actions (Major Fix) */
+    .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; border-top: 1px solid var(--border-light); padding-top: 2rem; }
+    .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    
+    .action-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: var(--spacing-card); background: var(--bg-surface);
+      border: 1px solid var(--border-light); border-radius: 12px;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-subtle); position: relative;
+    }
+    .action-icon {
+      width: 44px; height: 44px; border-radius: 50%; background: #F3F4F6; color: #4B5563;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .action-text h4 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem; }
+    .action-text p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+    
+    .action-card:hover { border-color: var(--border-hover); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transform: translateY(-4px); background: #F9FAFB; }
+    .action-card:hover .action-icon { background: var(--text-main); color: #FFFFFF; transform: scale(1.1) rotate(-5deg); }
+
+    /* Inner Sections */
+    .form-panel { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 8px; padding: 24px; margin-bottom: 24px; max-width: 600px; }
+    
+    /* Forms & Inputs */
+    .form-group { margin-bottom: 1.5rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem; }
+    .form-control {
+      width: 100%; padding: 0.625rem 0.875rem; font-size: 0.95rem; font-family: 'Inter', sans-serif;
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;
+      color: var(--text-main); transition: var(--transition); box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .form-control:focus { outline: none; border-color: var(--text-main); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
+    
+    /* Clean Solid Button */
+    .btn-solid {
+      width: 100%; padding: 0.75rem 1rem; border: none; border-radius: 6px;
+      background: var(--text-main); color: #FFFFFF; 
+      font-size: 0.95rem; font-weight: 500; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .btn-solid:hover { background: #1F2937; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .btn-solid:active { transform: scale(0.98); box-shadow: none; }
+
+    /* Tables */
+    .table-panel { border: 1px solid var(--border-light); border-radius: 8px; background: var(--bg-surface); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F9FAFB; padding: 0.875rem 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); }
+    td { padding: 1rem 1.5rem; font-size: 0.9rem; font-weight: 400; color: var(--text-main); border-bottom: 1px solid var(--border-light); transition: background 0.2s ease; }
+    tbody tr:hover td { background: #F9FAFB; }
+    tr:last-child td { border-bottom: none; }
+    
+    .status-badge {
+      display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; border: 1px solid transparent;
+    }
+    .status-badge.blue { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+    .status-badge.purple { background: #FAF5FF; color: #7E22CE; border-color: #E9D5FF; }
+    .status-badge.green { background: #ECFDF5; color: #047857; border-color: #A7F3D0; }
+    .status-badge.gray { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
+
+    /* Toast */
+    #toastContainer { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+  </style>
+  <style>
+    /* Small additions for JS injected badges that were in old style.css */
+    .badge { display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+    .badge-boys { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .badge-girls { background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; }
+    .badge-assigned { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+    .badge-org { background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; }
+    
+    .badge.PENDING { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+    .badge.ACCEPTED { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+    .badge.REJECTED { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; }
+
+    /* Fix table action buttons */
+    .btn-sm { padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-success { background: #10B981; color: white; }
+    .btn-danger { background: #EF4444; color: white; }
+    
+    /* Fix filters */
+    .admin-filters select {
+      padding: 0.4rem 0.6rem; font-size: 0.85rem; border: 1px solid var(--border-light); border-radius: 4px; font-family: 'Inter'; background: white;
+    }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header p { margin-bottom: 0; }
+  </style>
 </head>
 <body>
-<div class="app-layout">
 
-  <!-- Sidebar -->
+  <!-- LEFT SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-      <span class="brand-name">Admin Panel</span>
+      <img src="logo.jpeg" alt="RoomieMatch" style="height: 48px; width: auto; object-fit: contain;"> RoomieMatch
     </div>
+    
     <nav class="sidebar-nav">
-      <a href="admin.html"     class="nav-item active"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-      <a href="#" class="nav-item" id="navStudents" onclick="showSection('students')"><i class="fa-solid fa-users"></i> Students</a>
-      <a href="#" class="nav-item" id="navRequests" onclick="showSection('requests')"><i class="fa-solid fa-bell"></i> Requests</a>
-      <a href="#" class="nav-item" id="navAssign"   onclick="showSection('assign')"><i class="fa-solid fa-link"></i> Assign</a>
-      <a href="#" class="nav-item" id="navAssignments" onclick="showSection('assignments')"><i class="fa-solid fa-bed"></i> Assignments</a>
-      <a href="#" class="nav-item" id="navUpload"   onclick="showSection('upload')"><i class="fa-solid fa-file-csv"></i> Upload CSV</a>
-      <div class="nav-divider"></div>
-      <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-arrow-left"></i> User Dashboard</a>
-      <a href="#" class="nav-item nav-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign out</a>
+      <div class="nav-group-label">Warden Panel</div>
+      <a href="#" class="nav-item active" id="navDashboard" onclick="showSection('dashboard')">
+        <i class="fa-solid fa-chart-bar"></i> Dashboard
+      </a>
+      
+      <div class="nav-group-label">Management</div>
+      <a href="#" class="nav-item" id="navStudents" onclick="showSection('students')">
+        <i class="fa-solid fa-users"></i> Students
+      </a>
+      <a href="#" class="nav-item" id="navRequests" onclick="showSection('requests')">
+        <i class="fa-solid fa-link"></i> Requests
+      </a>
+      <a href="#" class="nav-item" id="navAssign" onclick="showSection('assign')">
+        <i class="fa-solid fa-hand-pointer"></i> Manual Assign
+      </a>
+      <a href="#" class="nav-item" id="navAssignments" onclick="showSection('assignments')">
+        <i class="fa-solid fa-bed"></i> Assignments
+      </a>
+      
+      <div class="nav-group-label">Navigation</div>
+      <a href="manager.html" class="nav-item">
+        <i class="fa-solid fa-shield"></i> Manager View
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <i class="fa-solid fa-user"></i> Student View
+      </a>
+      <a href="#" class="nav-item" id="logoutBtn" style="margin-top: 1rem; color: #DC2626;">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign out
+      </a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="user-chip">
-        <div class="user-avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#ef4444,#f87171);">A</div>
-        <span class="user-email" id="sidebarEmail">admin@upes.ac.in</span>
-      </div>
-    </div>
   </aside>
 
-  <!-- Main -->
-  <main class="main-content">
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-wrapper">
+    
+    <!-- TOP NAVBAR -->
+    <header class="topbar">
+      <div class="topbar-title">
+        Warden Workspace <span id="topbarSubtitle">/ Dashboard</span>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebarAvatar">W</div>
+        <span class="user-email" id="sidebarEmail">warden@upes.ac.in</span>
+      </div>
+    </header>
 
-    <!-- Page Header -->
-    <div class="page-header" data-aos="fade-down" data-aos-duration="400">
-      <h1><i class="fa-solid fa-shield-halved" style="margin-right:8px;"></i> Admin Dashboard</h1>
-      <p>Manage students, roommate requests, and assignments for your organization.</p>
-    </div>
+    <main class="main-content">
+      
+      <!-- ═══ SECTION: Dashboard ═══ -->
+      <div id="sectionDashboard" class="section-wrapper animate-in">
+        
+        <div class="page-header delay-1">
+          <h1>Dashboard</h1>
+          <p>Manage students, roommate requests, and assignments for your hostel.</p>
+        </div>
 
-    <!-- Stats Overview -->
-    <div class="row g-3" id="adminStats" data-aos="fade-up">
-      <div class="col-md-3">
-        <div class="card stat-card h-100">
-          <div class="stat-icon icon-purple"><i class="fa-solid fa-users"></i></div>
-          <div class="stat-title" id="statStudents">— Students</div>
-          <div class="stat-desc">Total registered students in your organization.</div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card stat-card h-100">
-          <div class="stat-icon icon-amber"><i class="fa-solid fa-clock"></i></div>
-          <div class="stat-title" id="statPending">— Pending</div>
-          <div class="stat-desc">Roommate requests waiting for a response.</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card stat-card h-100">
-          <div class="stat-icon icon-green"><i class="fa-solid fa-check-double"></i></div>
-          <div class="stat-title" id="statAccepted">— Accepted</div>
-          <div class="stat-desc">Successfully matched roommate pairs.</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card stat-card h-100">
-          <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981;"><i class="fa-solid fa-bed"></i></div>
-          <div class="stat-title" id="statAssigned">— Assigned</div>
-          <div class="stat-desc">Finalized room assignments.</div>
-        </div>
-      </div>
-    </div>
+        <!-- Stats Row -->
+        <div class="stats-grid animate-in delay-2" id="adminStats" style="margin-bottom: var(--spacing-section);">
+          <div class="stat-card">
+            <div class="stat-title">Total Students</div>
+            <div class="stat-value" id="statStudents">—</div>
+            <div class="stat-desc">Students in your hostel</div>
+          </div>
 
-    <!-- ═══ SECTION: Students ═══ -->
-    <div id="sectionStudents" class="admin-section mt-4" data-aos="fade-up">
-      <div class="section-header">
-        <div class="section-label"><i class="fa-solid fa-users"></i> Student Directory</div>
-        <div class="admin-filters">
-          <select id="hostelFilter" class="form-select form-select-sm" style="width:auto;min-width:200px;" onchange="loadStudents()">
-            <option value="">All Hostels</option>
-            <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
-            <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
-          </select>
+          <div class="stat-card">
+            <div class="stat-title">Pending Requests</div>
+            <div class="stat-value" id="statPending">—</div>
+            <div class="stat-desc">Waiting for a response</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-title">Matched Pairs</div>
+            <div class="stat-value" id="statAccepted">—</div>
+            <div class="stat-desc">Successfully synchronized</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-title">Rooms Assigned</div>
+            <div class="stat-value" id="statAssigned">—</div>
+            <div class="stat-desc">Finalized allocations</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="animate-in delay-3">
+          <h3 class="section-title">Quick Actions</h3>
+          <div class="action-grid">
+            
+            <div class="action-card" onclick="showSection('requests')">
+              <div class="action-icon"><i class="fa-solid fa-check-double"></i></div>
+              <div class="action-text">
+                <h4>Approve Requests</h4>
+                <p>Review and moderate pending roommate links.</p>
+              </div>
+            </div>
+
+            <div class="action-card" onclick="showSection('students')">
+              <div class="action-icon"><i class="fa-solid fa-users"></i></div>
+              <div class="action-text">
+                <h4>View Students</h4>
+                <p>Browse the directory of students in your hostel.</p>
+              </div>
+            </div>
+
+            <div class="action-card" onclick="showSection('assign')">
+              <div class="action-icon"><i class="fa-solid fa-bed"></i></div>
+              <div class="action-text">
+                <h4>Assign Roommates</h4>
+                <p>Manually allocate rooms and match students.</p>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
-      <div class="card" style="padding:0;overflow:hidden;">
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="studentsTable">
+
+      <!-- ═══ SECTION: Students ═══ -->
+      <div id="sectionStudents" class="section-wrapper" style="display:none;">
+        <div class="page-header">
+          <div class="section-header" style="margin:0; border:none; padding:0;">
+            <div>
+              <h1 style="font-size: 1.75rem; font-weight: 700;">Student Directory</h1>
+              <p style="color:var(--text-muted); margin-top:0.35rem;">Browse students assigned to your hostel.</p>
+            </div>
+            <div class="admin-filters">
+              <select id="hostelFilter" onchange="loadStudents()">
+                <option value="">All Hostels</option>
+                <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
+                <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="table-panel">
+          <table id="studentsTable">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Email</th>
-                <th>Organization</th>
-                <th>Hostel</th>
-                <th>Profile</th>
-                <th>Joined</th>
-              </tr>
+              <tr><th>ID</th><th>Email</th><th>Organization</th><th>Hostel</th><th>Profile</th><th>Joined</th></tr>
             </thead>
             <tbody id="studentsBody">
-              <tr><td colspan="6" class="table-empty">Loading…</td></tr>
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
 
-    <!-- ═══ SECTION: Requests ═══ -->
-    <div id="sectionRequests" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
-      <div class="section-header">
-        <div class="section-label"><i class="fa-solid fa-bell"></i> Roommate Requests</div>
-        <div class="admin-filters">
-          <select id="statusFilter" class="form-select form-select-sm" style="width:auto;min-width:180px;" onchange="loadRequests()">
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="ACCEPTED">Accepted</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
+      <!-- ═══ SECTION: Requests ═══ -->
+      <div id="sectionRequests" class="section-wrapper" style="display:none;">
+        <div class="page-header">
+          <div class="section-header" style="margin:0; border:none; padding:0;">
+            <div>
+              <h1 style="font-size: 1.75rem; font-weight: 700;">Roommate Requests</h1>
+              <p style="color:var(--text-muted); margin-top:0.35rem;">Manage pending and resolved matching requests.</p>
+            </div>
+            <div class="admin-filters">
+              <select id="statusFilter" onchange="loadRequests()">
+                <option value="">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="ACCEPTED">Accepted</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
-    <div class="card" style="padding:0;overflow:hidden;">
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="requestsTable">
+        <div class="table-panel">
+          <table id="requestsTable">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Sender</th>
-                <th>Receiver</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
+              <tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Status</th><th>Created</th><th>Actions</th></tr>
             </thead>
             <tbody id="requestsBody">
-              <tr><td colspan="6" class="table-empty">Loading…</td></tr>
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
 
-    <!-- ═══ SECTION: Assign ═══ -->
-    <div id="sectionAssign" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
-      <div class="section-label"><i class="fa-solid fa-link"></i> Manual Roommate Assignment</div>
-      <div class="card" style="max-width:500px;">
-        <p style="font-size:13px;color:var(--text-2);margin-bottom:18px;">
-          Select two students to assign as roommates. Both must be in the same hostel.
-        </p>
-        <form id="assignForm">
-          <div class="form-group">
-            <label class="form-label" for="assignUser1">Student 1 (User ID)</label>
-            <input type="number" id="assignUser1" class="form-control" placeholder="Enter User ID" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="assignUser2">Student 2 (User ID)</label>
-            <input type="number" id="assignUser2" class="form-control" placeholder="Enter User ID" required>
-          </div>
-          <button type="submit" class="btn btn-primary btn-w100" id="assignBtn">
-            <i class="fa-solid fa-link fa-sm"></i> Assign Roommates
-          </button>
-        </form>
-        <div id="assignResult" style="margin-top:16px;"></div>
-      </div>
-    </div>
-
-    <!-- ═══ SECTION: Upload CSV ═══ -->
-    <div id="sectionUpload" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
-      <div class="section-label"><i class="fa-solid fa-file-csv"></i> Bulk Student Upload</div>
-      <div class="card" style="max-width:600px;">
-        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">
-          Upload a CSV file containing student credentials. Passwords will be securely hashed with BCrypt before storage. Students can then log in using the same email and password from the CSV.
-        </p>
-
-        <!-- Sample format -->
-        <div style="margin-bottom:18px;padding:12px;background:var(--bg-3);border-radius:8px;font-size:12px;font-family:monospace;">
-          <div style="color:var(--text-3);margin-bottom:6px;">📄 Sample CSV format:</div>
-          <div style="color:var(--primary);">name,email,password,hostel,sapId</div>
-          <div style="color:var(--text-2);">Rahul Kumar,rahul@upes.ac.in,Pass@1234,Bidholi Boys,590012345</div>
-          <div style="color:var(--text-2);">Priya Sharma,priya@upes.ac.in,Sec#5678,Bidholi Girls,590012346</div>
+      <!-- ═══ SECTION: Assign ═══ -->
+      <div id="sectionAssign" class="section-wrapper" style="display:none;">
+        <div class="page-header">
+          <h1>Manual Assignment</h1>
+          <p>Select two students to assign as roommates. Both must be in the same hostel.</p>
         </div>
-
-        <!-- Dropzone -->
-        <div id="dropZone" class="upload-dropzone">
-          <i class="fa-solid fa-cloud-arrow-up" style="font-size:32px;color:var(--primary);margin-bottom:8px;"></i>
-          <div style="font-weight:600;color:var(--text-1);">Drag & drop your CSV here</div>
-          <div style="font-size:12px;color:var(--text-3);margin:4px 0 12px;">or</div>
-          <label class="btn btn-outline-primary btn-sm" for="csvFileInput" style="cursor:pointer;">
-            <i class="fa-solid fa-folder-open fa-sm"></i> Browse files
-          </label>
-          <input type="file" id="csvFileInput" accept=".csv,.json" style="display:none;">
-          <div id="selectedFileName" style="margin-top:10px;font-size:12px;color:var(--text-3);"></div>
-        </div>
-
-        <!-- Upload button -->
-        <button type="button" class="btn btn-primary btn-w100" id="uploadBtn" style="margin-top:16px;" disabled>
-          <i class="fa-solid fa-upload fa-sm"></i> Upload & Process
-        </button>
-
-        <!-- Progress -->
-        <div id="uploadProgress" style="display:none;margin-top:16px;">
-          <div class="progress" style="height:6px;border-radius:4px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" id="uploadProgressBar" style="width:100%;background:var(--primary);"></div>
-          </div>
-          <div style="font-size:12px;color:var(--text-3);margin-top:6px;text-align:center;">Processing students…</div>
-        </div>
-
-        <!-- Results -->
-        <div id="uploadResults" style="display:none;margin-top:18px;"></div>
-      </div>
-    </div>
-
-    <!-- ═══ SECTION: Assignments ═══ -->
-    <div id="sectionAssignments" class="admin-section mt-4" style="display:none;" data-aos="fade-up">
-      <div class="section-header">
-        <div class="section-label"><i class="fa-solid fa-bed"></i> Room Assignments</div>
-        <div class="admin-filters">
-          <select id="assignHostelFilter" class="form-select form-select-sm" style="width:auto;min-width:200px;" onchange="loadAssignments()">
-            <option value="">All Hostels</option>
-            <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
-            <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
-          </select>
+        <div class="form-panel">
+          <form id="assignForm">
+            <div class="form-group">
+              <label class="form-label" for="assignUser1">Student 1 (User ID)</label>
+              <input type="number" id="assignUser1" class="form-control" placeholder="Enter User ID" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="assignUser2">Student 2 (User ID)</label>
+              <input type="number" id="assignUser2" class="form-control" placeholder="Enter User ID" required>
+            </div>
+            <button type="submit" class="btn-solid" id="assignBtn">
+              Assign Roommates
+            </button>
+          </form>
+          <div id="assignResult" style="margin-top:1.5rem;"></div>
         </div>
       </div>
-      <div class="card p-0">
-        <div class="table-responsive">
-          <table class="table">
+
+      <!-- ═══ SECTION: Assignments ═══ -->
+      <div id="sectionAssignments" class="section-wrapper" style="display:none;">
+        <div class="page-header">
+          <div class="section-header" style="margin:0; border:none; padding:0;">
+            <div>
+              <h1 style="font-size: 1.75rem; font-weight: 700;">Room Assignments</h1>
+              <p style="color:var(--text-muted); margin-top:0.35rem;">View all finalized room assignments.</p>
+            </div>
+            <div class="admin-filters">
+              <select id="assignHostelFilter" onchange="loadAssignments()">
+                <option value="">All Hostels</option>
+                <option value="BIDHOLI_BOYS_HOSTEL">Bidholi Boys Hostel</option>
+                <option value="BIDHOLI_GIRLS_HOSTEL">Bidholi Girls Hostel</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="table-panel">
+          <table id="assignmentsTable">
             <thead>
-              <tr>
-                <th>#</th>
-                <th>Student 1</th>
-                <th>Student 2</th>
-                <th>Hostel</th>
-                <th>Assigned By</th>
-                <th>Date</th>
-                <th>Status</th>
-              </tr>
+              <tr><th>#</th><th>Student 1</th><th>Student 2</th><th>Hostel</th><th>Assigned By</th><th>Date</th><th>Status</th></tr>
             </thead>
             <tbody id="assignmentsBody">
-              <tr><td colspan="7" class="table-empty">Click "Assignments" to load data</td></tr>
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Click "Assignments" to load data</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
 
-  </main>
-</div>
+    </main>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-<script src="script.js"></script>
+  <div id="toastContainer"></div>
+
 <script>
 /* ═══════════════════════════════════════════════════
    Admin Dashboard — Inline Script
@@ -270,19 +529,15 @@
     return;
   }
 
-  // If WARDEN, hide the hostel filter (they auto-filter) & hide upload
+  // If WARDEN, hide the hostel filter (they auto-filter)
   if (role === 'WARDEN') {
     const hf = document.getElementById('hostelFilter');
     if (hf) hf.closest('.admin-filters')?.remove();
-    // Hide Upload nav — only Managers can upload
-    const navUpload = document.getElementById('navUpload');
-    if (navUpload) navUpload.style.display = 'none';
   }
 })();
 
-// Section navigation
 function showSection(name) {
-  ['Students', 'Requests', 'Assign', 'Upload', 'Assignments'].forEach(s => {
+  ['Dashboard', 'Students', 'Requests', 'Assign', 'Assignments'].forEach(s => {
     const el = document.getElementById('section' + s);
     if (el) el.style.display = 'none';
   });
@@ -293,6 +548,16 @@ function showSection(name) {
 
   const nav = document.getElementById('nav' + name.charAt(0).toUpperCase() + name.slice(1));
   if (nav) nav.classList.add('active');
+  
+  const subtitles = {
+    'dashboard': 'Dashboard',
+    'students': 'Students',
+    'requests': 'Requests',
+    'assign': 'Manual Assign',
+    'assignments': 'Assignments'
+  };
+  const sub = document.getElementById('topbarSubtitle');
+  if (sub) sub.innerText = '/ ' + subtitles[name];
 
   if (name === 'students') loadStudents();
   if (name === 'requests') loadRequests();
@@ -308,10 +573,10 @@ async function loadStats() {
       api('/admin/requests?status=ACCEPTED'),
       api('/admin/assignments'),
     ]);
-    document.getElementById('statStudents').textContent = (studentsRes.data?.length || 0) + ' Students';
-    document.getElementById('statPending').textContent  = (pendingRes.data?.length || 0) + ' Pending';
-    document.getElementById('statAccepted').textContent = (acceptedRes.data?.length || 0) + ' Accepted';
-    document.getElementById('statAssigned').textContent = (assignmentsRes.data?.length || 0) + ' Assigned';
+    document.getElementById('statStudents').textContent = (studentsRes.data?.length || 0);
+    document.getElementById('statPending').textContent  = (pendingRes.data?.length || 0);
+    document.getElementById('statAccepted').textContent = (acceptedRes.data?.length || 0);
+    document.getElementById('statAssigned').textContent = (assignmentsRes.data?.length || 0);
   } catch (_) {}
 }
 
@@ -319,7 +584,7 @@ async function loadStats() {
 async function loadStudents() {
   const tbody = document.getElementById('studentsBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>';
 
   const hostel = document.getElementById('hostelFilter')?.value || '';
   const url = '/admin/students' + (hostel ? '?hostel=' + hostel : '');
@@ -329,24 +594,24 @@ async function loadStudents() {
     const students = res.data || [];
 
     if (!students.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No students found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No students found</td></tr>';
       return;
     }
 
     tbody.innerHTML = students.map(s => `
       <tr>
-        <td><span class="table-id">${s.id}</span></td>
+        <td><strong>${s.id}</strong></td>
         <td>${s.email}</td>
         <td><span class="badge badge-org">${s.organization || '—'}</span></td>
         <td><span class="badge ${s.hostel?.includes('BOYS') ? 'badge-boys' : 'badge-girls'}">${fmtHostel(s.hostel)}</span></td>
         <td>${s.profileComplete
-              ? '<span style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Done</span>'
-              : '<span style="color:var(--text-3);"><i class="fa-regular fa-circle"></i> No</span>'}</td>
-        <td style="color:var(--text-3);font-size:12px;">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>
+              ? '<span style="color:#10B981;"><i class="fa-solid fa-circle-check"></i> Done</span>'
+              : '<span style="color:var(--text-lighter);"><i class="fa-regular fa-circle"></i> No</span>'}</td>
+        <td style="color:var(--text-muted);">${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>
       </tr>
     `).join('');
   } catch (_) {
-    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load students</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Failed to load students</td></tr>';
   }
 }
 
@@ -354,7 +619,7 @@ async function loadStudents() {
 async function loadRequests() {
   const tbody = document.getElementById('requestsBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>';
 
   const status = document.getElementById('statusFilter')?.value || '';
   const url = '/admin/requests' + (status ? '?status=' + status : '');
@@ -364,31 +629,31 @@ async function loadRequests() {
     const requests = res.data || [];
 
     if (!requests.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No requests found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No requests found</td></tr>';
       return;
     }
 
     tbody.innerHTML = requests.map(r => `
       <tr>
-        <td><span class="table-id">${r.id}</span></td>
+        <td><strong>${r.id}</strong></td>
         <td>${r.senderEmail || 'User #' + r.senderId}</td>
         <td>${r.receiverEmail || 'User #' + r.receiverId}</td>
-        <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
-        <td style="color:var(--text-3);font-size:12px;">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}</td>
+        <td><span class="badge ${r.status}">${r.status}</span></td>
+        <td style="color:var(--text-muted);">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '—'}</td>
         <td>
           ${r.status === 'PENDING' ? `
-            <button class="btn btn-success btn-sm" onclick="adminRespondRequest(${r.id}, 'ACCEPTED')" title="Accept">
+            <button class="btn-sm btn-success" onclick="adminRespondRequest(${r.id}, 'ACCEPTED')" title="Accept">
               <i class="fa-solid fa-check"></i>
             </button>
-            <button class="btn btn-danger btn-sm" onclick="adminRespondRequest(${r.id}, 'REJECTED')" title="Reject">
+            <button class="btn-sm btn-danger" onclick="adminRespondRequest(${r.id}, 'REJECTED')" title="Reject">
               <i class="fa-solid fa-xmark"></i>
             </button>
-          ` : '<span style="color:var(--text-3);font-size:12px;">—</span>'}
+          ` : '<span style="color:var(--text-lighter);">—</span>'}
         </td>
       </tr>
     `).join('');
   } catch (_) {
-    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load requests</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Failed to load requests</td></tr>';
   }
 }
 
@@ -421,7 +686,7 @@ document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
     toast('Roommates assigned successfully!');
     if (res_div) {
       res_div.innerHTML = `
-        <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;font-size:13px;color:var(--success);">
+        <div style="padding:12px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:13px;color:#047857;">
           <i class="fa-solid fa-check-circle"></i> Assigned: User #${u1} ↔ User #${u2} (Request #${res.data?.id})
         </div>`;
     }
@@ -429,114 +694,6 @@ document.getElementById('assignForm')?.addEventListener('submit', async (e) => {
   } catch (_) {
   } finally {
     setBtnLoading(btn, false);
-  }
-});
-
-/* ═══════════════════════════════════════════════════
-   CSV Upload Logic
-   ═══════════════════════════════════════════════════ */
-let selectedFile = null;
-
-const dropZone      = document.getElementById('dropZone');
-const csvFileInput  = document.getElementById('csvFileInput');
-const uploadBtn     = document.getElementById('uploadBtn');
-const fileNameEl    = document.getElementById('selectedFileName');
-const progressEl    = document.getElementById('uploadProgress');
-const resultsEl     = document.getElementById('uploadResults');
-
-function setSelectedFile(file) {
-  if (!file) return;
-  const name = file.name.toLowerCase();
-  if (!name.endsWith('.csv') && !name.endsWith('.json')) {
-    toast('Only .csv and .json files are supported.', 'error');
-    return;
-  }
-  selectedFile = file;
-  fileNameEl.textContent = '📎 ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-  uploadBtn.disabled = false;
-  dropZone.classList.add('dropzone-active');
-}
-
-// File input change
-csvFileInput?.addEventListener('change', (e) => {
-  if (e.target.files.length) setSelectedFile(e.target.files[0]);
-});
-
-// Drag and drop
-dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dropzone-hover'); });
-dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('dropzone-hover'));
-dropZone?.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dropzone-hover');
-  if (e.dataTransfer.files.length) setSelectedFile(e.dataTransfer.files[0]);
-});
-
-// Upload handler
-uploadBtn?.addEventListener('click', async () => {
-  if (!selectedFile) { toast('Please select a CSV file first.', 'error'); return; }
-
-  uploadBtn.disabled = true;
-  progressEl.style.display = 'block';
-  resultsEl.style.display = 'none';
-
-  const formData = new FormData();
-  formData.append('file', selectedFile);
-
-  try {
-    const token = getToken();
-    const resp = await fetch(API + '/manager/upload-students', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: formData
-    });
-    const json = await resp.json();
-
-    progressEl.style.display = 'none';
-
-    if (!resp.ok || !json.success) {
-      toast(json.message || 'Upload failed', 'error');
-      resultsEl.style.display = 'block';
-      resultsEl.innerHTML = `
-        <div style="padding:14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
-          <div style="font-weight:600;color:#ef4444;margin-bottom:6px;"><i class="fa-solid fa-circle-xmark"></i> Upload Failed</div>
-          <div style="font-size:13px;color:var(--text-2);">${json.message || 'Unknown error'}</div>
-        </div>`;
-      return;
-    }
-
-    const d = json.data;
-    toast('Upload complete! ' + d.created + ' students created.');
-    resultsEl.style.display = 'block';
-    resultsEl.innerHTML = `
-      <div style="padding:14px;background:var(--bg-3);border-radius:8px;">
-        <div style="font-weight:600;color:var(--text-1);margin-bottom:10px;"><i class="fa-solid fa-chart-pie"></i> Upload Results</div>
-        <div class="row g-2" style="font-size:13px;">
-          <div class="col-6"><span style="color:var(--text-3);">Total Records:</span> <strong>${d.totalRecords}</strong></div>
-          <div class="col-6"><span style="color:var(--success);">✓ Created:</span> <strong>${d.created}</strong></div>
-          <div class="col-6"><span style="color:var(--warning);">⊘ Skipped (duplicates):</span> <strong>${d.skipped}</strong></div>
-          <div class="col-6"><span style="color:#ef4444;">✕ Failed:</span> <strong>${d.failed}</strong></div>
-        </div>
-        ${d.errors && d.errors.length ? `
-          <div style="margin-top:12px;padding:10px;background:rgba(239,68,68,0.08);border-radius:6px;max-height:160px;overflow-y:auto;">
-            <div style="font-size:11px;font-weight:600;color:#ef4444;margin-bottom:4px;">Error Details:</div>
-            ${d.errors.map(e => `<div style="font-size:12px;color:var(--text-2);padding:2px 0;">• ${e}</div>`).join('')}
-          </div>
-        ` : ''}
-      </div>`;
-
-    // Refresh student list and stats
-    loadStats();
-    loadStudents();
-  } catch (err) {
-    progressEl.style.display = 'none';
-    toast('Network error during upload.', 'error');
-  } finally {
-    // Reset
-    selectedFile = null;
-    csvFileInput.value = '';
-    fileNameEl.textContent = '';
-    uploadBtn.disabled = true;
-    dropZone.classList.remove('dropzone-active');
   }
 });
 
@@ -552,7 +709,7 @@ function fmtHostel(h) {
 async function loadAssignments() {
   const tbody = document.getElementById('assignmentsBody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Loading...</td></tr>';
 
   const hostel = document.getElementById('assignHostelFilter')?.value || '';
   const url = '/admin/assignments' + (hostel ? '?hostel=' + hostel : '');
@@ -562,35 +719,34 @@ async function loadAssignments() {
     const assignments = res.data || [];
 
     if (!assignments.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No room assignments found</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No room assignments found</td></tr>';
       return;
     }
 
     tbody.innerHTML = assignments.map(a => `
       <tr>
-        <td><span class="table-id">${a.id}</span></td>
+        <td><strong>${a.id}</strong></td>
         <td>
-          <div style="font-weight:600;color:var(--text-1);font-size:13px;">${a.user1Name || 'User #' + a.user1Id}</div>
-          <div style="font-size:11px;color:var(--text-3);">${a.user1Email}</div>
+          <div style="font-weight:500;color:var(--text-main);">${a.user1Name || 'User #' + a.user1Id}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${a.user1Email}</div>
         </td>
         <td>
-          <div style="font-weight:600;color:var(--text-1);font-size:13px;">${a.user2Name || 'User #' + a.user2Id}</div>
-          <div style="font-size:11px;color:var(--text-3);">${a.user2Email}</div>
+          <div style="font-weight:500;color:var(--text-main);">${a.user2Name || 'User #' + a.user2Id}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${a.user2Email}</div>
         </td>
         <td><span class="badge ${a.hostel?.includes('BOYS') ? 'badge-boys' : 'badge-girls'}">${fmtHostel(a.hostel)}</span></td>
-        <td style="font-size:12px;color:var(--text-2);">${a.assignedByEmail}</td>
-        <td style="font-size:12px;color:var(--text-3);">${a.assignedAt ? new Date(a.assignedAt).toLocaleDateString() : '—'}</td>
+        <td style="color:var(--text-muted);">${a.assignedByEmail}</td>
+        <td style="color:var(--text-muted);">${a.assignedAt ? new Date(a.assignedAt).toLocaleDateString() : '—'}</td>
         <td><span class="badge badge-assigned">${a.status}</span></td>
       </tr>
     `).join('');
   } catch (_) {
-    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Failed to load assignments</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Failed to load assignments</td></tr>';
   }
 }
 
 // Init
 loadStats();
-loadStudents();
 </script>
 </body>
 </html>

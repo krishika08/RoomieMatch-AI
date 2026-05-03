@@ -5,163 +5,545 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Profile — RoomieMatch AI</title>
   <meta name="description" content="Set your living preferences to power the RoomieMatch AI engine.">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <link href="style.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="polish.css" rel="stylesheet">
+  <script src="script.js"></script>
+  <style>
+    /* =========================================
+       STRUCTURAL DASHBOARD REFINEMENT
+       ========================================= */
+    :root {
+      --bg-body: #F9FAFB;
+      --bg-surface: #FFFFFF;
+      --border-light: #E5E7EB;
+      --border-hover: #D1D5DB;
+      --text-main: #111827;
+      --text-muted: #6B7280;
+      --text-lighter: #9CA3AF;
+      --primary: #111827; /* Strict high-contrast primary */
+      --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      --transition: all 0.2s ease;
+      
+      --spacing-section: 48px; /* Massive spacing rule */
+      --spacing-card: 20px;
+    }
+
+    /* Animations */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-in {
+      animation: fadeSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.1s; }
+    .delay-3 { animation-delay: 0.15s; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout structure */
+    .sidebar {
+      width: 260px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 100vh;
+      z-index: 10;
+    }
+
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Navbar */
+    .topbar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .topbar-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .topbar-title span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #F3F4F6;
+      color: var(--text-main);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border-light);
+    }
+    .user-email { font-size: 0.875rem; font-weight: 500; color: var(--text-main); }
+
+    /* Sidebar Content */
+    .sidebar-brand {
+      height: 64px; display: flex; align-items: center; padding: 0 1.5rem;
+      font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border-light); gap: 0.5rem;
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .nav-group-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-lighter);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 1.5rem 1.5rem 0.5rem;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.625rem 1.5rem; margin: 0.125rem 0.5rem; border-radius: 6px;
+      color: var(--text-muted); text-decoration: none;
+      font-weight: 500; font-size: 0.9rem;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative;
+    }
+    .nav-item i { font-size: 1rem; width: 16px; text-align: center; }
+    
+    .nav-item:hover { color: var(--text-main); background: #F3F4F6; transform: translateX(4px); }
+
+    .nav-item.active { color: var(--text-main); font-weight: 600; background: #F3F4F6; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: -0.5rem; top: 10%; bottom: 10%;
+      width: 4px; background: var(--primary); border-radius: 0 4px 4px 0;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1; overflow-y: auto; padding: 2.5rem 3rem; background: var(--bg-body);
+    }
+    .main-content::-webkit-scrollbar { width: 6px; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+    /* Section Grouping Constraints */
+    .section-wrapper {
+      max-width: 1200px;
+      margin-bottom: var(--spacing-section);
+    }
+
+    /* Main Title Section */
+    .page-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--text-main); line-height: 1.2; letter-spacing: -0.02em; }
+    .page-header p { font-size: 1rem; color: var(--text-muted); margin-top: 0.35rem; }
+
+    /* Stats Section (Clean Row) */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+    }
+    .stat-card {
+      background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px;
+      padding: var(--spacing-card); display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden; box-shadow: var(--shadow-subtle); transition: all 0.3s ease;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #111827, #6B7280); opacity: 0; transition: opacity 0.3s ease;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); }
+    .stat-card:hover::before { opacity: 1; }
+    
+    .stat-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 1rem; }
+    .stat-value { font-size: 2.75rem; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 0.5rem; letter-spacing: -0.04em; }
+    .stat-desc { font-size: 0.85rem; color: var(--text-lighter); }
+
+    /* Quick Actions (Major Fix) */
+    .section-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.25rem; border-top: 1px solid var(--border-light); padding-top: 2rem; }
+    .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    
+    .action-card {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: var(--spacing-card); background: var(--bg-surface);
+      border: 1px solid var(--border-light); border-radius: 12px;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-subtle); position: relative;
+    }
+    .action-icon {
+      width: 44px; height: 44px; border-radius: 50%; background: #F3F4F6; color: #4B5563;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .action-text h4 { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem; }
+    .action-text p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+    
+    .action-card:hover { border-color: var(--border-hover); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transform: translateY(-4px); background: #F9FAFB; }
+    .action-card:hover .action-icon { background: var(--text-main); color: #FFFFFF; transform: scale(1.1) rotate(-5deg); }
+
+    /* Inner Sections */
+    .form-panel { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 8px; padding: 24px; margin-bottom: 24px; max-width: 600px; }
+    
+    /* Forms & Inputs */
+    .form-group { margin-bottom: 1.5rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem; }
+    .form-control {
+      width: 100%; padding: 0.625rem 0.875rem; font-size: 0.95rem; font-family: 'Inter', sans-serif;
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 6px;
+      color: var(--text-main); transition: var(--transition); box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .form-control:focus { outline: none; border-color: var(--text-main); box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.1); }
+    
+    /* Clean Solid Button */
+    .btn-solid {
+      width: 100%; padding: 0.75rem 1rem; border: none; border-radius: 6px;
+      background: var(--text-main); color: #FFFFFF; 
+      font-size: 0.95rem; font-weight: 500; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .btn-solid:hover { background: #1F2937; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .btn-solid:active { transform: scale(0.98); box-shadow: none; }
+
+    /* Tables */
+    .table-panel { border: 1px solid var(--border-light); border-radius: 8px; background: var(--bg-surface); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #F9FAFB; padding: 0.875rem 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); }
+    td { padding: 1rem 1.5rem; font-size: 0.9rem; font-weight: 400; color: var(--text-main); border-bottom: 1px solid var(--border-light); transition: background 0.2s ease; }
+    tbody tr:hover td { background: #F9FAFB; }
+    tr:last-child td { border-bottom: none; }
+    
+    .status-badge {
+      display: inline-flex; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; border: 1px solid transparent;
+    }
+    .status-badge.blue { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+    .status-badge.purple { background: #FAF5FF; color: #7E22CE; border-color: #E9D5FF; }
+    .status-badge.green { background: #ECFDF5; color: #047857; border-color: #A7F3D0; }
+    .status-badge.gray { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
+
+    /* Toast */
+    #toastContainer { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; }
+  </style>
+  <style>
+    /* Premium Form Styling Overrides */
+    .form-panel {
+      background: #FFFFFF;
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 800px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    
+    .form-section {
+      margin-bottom: 32px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .form-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .section-label {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label i { color: #6B7280; font-size: 0.9rem; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+    }
+    
+    .form-control {
+      background: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 0.65rem 1rem;
+      color: var(--text-main);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+      transition: all 0.2s ease;
+      appearance: none;
+    }
+    /* Custom Select Arrow */
+    select.form-control {
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E");
+      background-position: right 0.75rem center;
+      background-repeat: no-repeat;
+      background-size: 16px 12px;
+      padding-right: 2.5rem;
+    }
+    
+    .form-control:focus {
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      outline: none;
+    }
+    
+    .btn-save {
+      background: var(--text-main);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      padding: 0.875rem 2rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    }
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      background: #1F2937;
+    }
+    
+    .info-card {
+      max-width: 800px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    /* Toast overriding */
+    .toast-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-radius: 12px; font-size: 0.95rem; font-weight: 500; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-width: 360px; background: #FFFFFF; color: #111827; border: 1px solid #E5E7EB; }
+    .toast-item i { font-size: 1.1rem; }
+    .toast-item.success { border-left: 4px solid #10B981; }
+    .toast-item.success i { color: #10B981; }
+    .toast-item.error   { border-left: 4px solid #EF4444; }
+    .toast-item.error i { color: #EF4444; }
+    .toast-item.info    { border-left: 4px solid #3B82F6; }
+    .toast-item.info i  { color: #3B82F6; }
+    .toast-item.removing { animation: slideOut 0.3s ease forwards; }
+    @keyframes slideIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes slideOut { from { opacity:1; transform: translateY(0); } to { opacity:0; transform: translateY(20px); } }
+  </style>
 </head>
 <body>
-<div class="app-layout">
 
+  <!-- LEFT SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon"><i class="fa-solid fa-house-chimney"></i></div>
-      <span class="brand-name">RoomieMatch AI</span>
+      <img src="logo.jpeg" alt="RoomieMatch" style="height: 48px; width: auto; object-fit: contain;"> RoomieMatch
     </div>
+    
     <nav class="sidebar-nav">
-      <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
-      <a href="profile.html"   class="nav-item active"><i class="fa-solid fa-user-pen"></i> Profile</a>
-      <a href="matches.html"   class="nav-item"><i class="fa-solid fa-handshake"></i> Matches</a>
-      <a href="requests.html"  class="nav-item"><i class="fa-solid fa-bell"></i> Requests</a>
-      <div class="nav-divider"></div>
-      <a href="#" class="nav-item nav-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign out</a>
+      <div class="nav-group-label">Main</div>
+      <a href="dashboard.html" class="nav-item">
+        <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+      
+      <div class="nav-group-label">Profile & Matches</div>
+      <a href="profile.html" class="nav-item active">
+        <i class="fa-solid fa-user-pen"></i> Profile
+      </a>
+      <a href="matches.html" class="nav-item">
+        <i class="fa-solid fa-handshake"></i> Matches
+      </a>
+      <a href="requests.html" class="nav-item">
+        <i class="fa-solid fa-bell"></i> Requests
+      </a>
+      
+      <div class="nav-group-label">Navigation</div>
+      <a href="#" class="nav-item" id="logoutBtn" style="margin-top: 1rem; color: #DC2626;">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign out
+      </a>
     </nav>
-    <div class="sidebar-footer">
-      <div class="user-chip">
-        <div class="user-avatar" id="sidebarAvatar">U</div>
-        <span class="user-email" id="sidebarEmail">user@app.com</span>
-      </div>
-    </div>
   </aside>
 
-  <main class="main-content">
-    <div class="page-header" data-aos="fade-down" data-aos-duration="400">
-      <h1>Living Preferences</h1>
-      <p>These preferences power the AI matching engine. Fill all fields for best results.</p>
-    </div>
-
-    <div style="max-width:640px;" data-aos="fade-up" data-aos-delay="60">
-
-      <!-- Status badge -->
-      <div id="profileStatus" style="font-size:13px;color:var(--text-3);margin-bottom:16px;
-           display:flex;align-items:center;gap:6px;">
-        Loading your preferences…
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-wrapper">
+    
+    <!-- TOP NAVBAR -->
+    <header class="topbar">
+      <div class="topbar-title">
+        Student Workspace <span id="topbarSubtitle">/ Profile Preferences</span>
       </div>
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebarAvatar">U</div>
+        <span class="user-email" id="sidebarEmail">student@upes.ac.in</span>
+      </div>
+    </header>
 
-      <form id="profileForm" class="card" style="padding:28px 28px 24px;" novalidate>
-
-        <!-- Sleep & Cleanliness -->
-        <div style="margin-bottom:24px;">
-          <div class="section-label"><i class="fa-solid fa-moon fa-xs"></i> Sleep &amp; Cleanliness</div>
-          <div class="form-row">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="sleepSchedule">Sleep schedule</label>
-              <select id="sleepSchedule" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="EARLY_BIRD">Early Bird (before 10 PM)</option>
-                <option value="NIGHT_OWL">Night Owl (after midnight)</option>
-                <option value="FLEXIBLE">Flexible</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="cleanlinessLevel">Cleanliness level</label>
-              <select id="cleanlinessLevel" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="VERY_CLEAN">Very Clean</option>
-                <option value="MODERATE">Moderate</option>
-                <option value="RELAXED">Relaxed</option>
-              </select>
-            </div>
-          </div>
+    <main class="main-content">
+      
+      <div class="section-wrapper animate-in">
+        
+        <div class="page-header delay-1">
+          <h1>Living Preferences</h1>
+          <p>These preferences power the AI matching engine. Fill all fields for best results.</p>
         </div>
 
-        <!-- Social & Noise -->
-        <div style="margin-bottom:24px;">
-          <div class="section-label"><i class="fa-solid fa-users fa-xs"></i> Social &amp; Noise</div>
-          <div class="form-row">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="noiseTolerance">Noise tolerance</label>
-              <select id="noiseTolerance" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="SILENT">Silent</option>
-                <option value="MODERATE">Moderate</option>
-                <option value="LOUD_OK">Loud is OK</option>
-              </select>
+        <div class="animate-in delay-2">
+
+          <!-- Status badge -->
+          <div id="profileStatus" style="font-size:0.85rem; color:#6B7280; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Loading your preferences...
+          </div>
+
+          <form id="profileForm" class="form-panel" novalidate>
+
+            <!-- Sleep & Cleanliness -->
+            <div class="form-section">
+              <div class="section-label"><i class="fa-solid fa-moon"></i> Sleep & Cleanliness</div>
+              <div class="form-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="sleepSchedule">Sleep schedule</label>
+                  <select id="sleepSchedule" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="EARLY_BIRD">Early Bird (before 10 PM)</option>
+                    <option value="NIGHT_OWL">Night Owl (after midnight)</option>
+                    <option value="FLEXIBLE">Flexible</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="cleanlinessLevel">Cleanliness level</label>
+                  <select id="cleanlinessLevel" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="VERY_CLEAN">Very Clean</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="RELAXED">Relaxed</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="socialLevel">Social level</label>
-              <select id="socialLevel" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="INTROVERT">Introvert</option>
-                <option value="AMBIVERT">Ambivert</option>
-                <option value="EXTROVERT">Extrovert</option>
-              </select>
+
+            <!-- Social & Noise -->
+            <div class="form-section">
+              <div class="section-label"><i class="fa-solid fa-users"></i> Social & Noise</div>
+              <div class="form-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="noiseTolerance">Noise tolerance</label>
+                  <select id="noiseTolerance" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="SILENT">Silent</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="LOUD_OK">Loud is OK</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="socialLevel">Social level</label>
+                  <select id="socialLevel" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="INTROVERT">Introvert</option>
+                    <option value="AMBIVERT">Ambivert</option>
+                    <option value="EXTROVERT">Extrovert</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Study & Guests -->
+            <div class="form-section">
+              <div class="section-label"><i class="fa-solid fa-book-open"></i> Study & Guests</div>
+              <div class="form-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="studyHabits">Study habits</label>
+                  <select id="studyHabits" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="IN_ROOM">Study in room</option>
+                    <option value="LIBRARY">Library / outside</option>
+                    <option value="FLEXIBLE">Flexible</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="guestFrequency">Guest frequency</label>
+                  <select id="guestFrequency" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="RARELY">Rarely</option>
+                    <option value="SOMETIMES">Sometimes</option>
+                    <option value="OFTEN">Often</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Temperature -->
+            <div class="form-section">
+              <div class="section-label"><i class="fa-solid fa-temperature-half"></i> Temperature</div>
+              <div class="form-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="roomTemperature">Room temperature preference</label>
+                  <select id="roomTemperature" class="form-control" required>
+                    <option value="">Choose...</option>
+                    <option value="COOL">Cool (below 22°C)</option>
+                    <option value="MODERATE">Moderate (22–25°C)</option>
+                    <option value="WARM">Warm (above 25°C)</option>
+                  </select>
+                </div>
+                <!-- Empty div for grid alignment -->
+                <div></div>
+              </div>
+            </div>
+
+            <div style="margin-top: 32px; display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn-save" id="saveProfileBtn">
+                <i class="fa-solid fa-check"></i> Save Preferences
+              </button>
+            </div>
+
+          </form>
+
+          <!-- Info card -->
+          <div class="info-card">
+            <i class="fa-solid fa-circle-info" style="color:var(--text-main); margin-top:2px;"></i>
+            <div style="font-size:0.85rem; color:#4B5563; line-height:1.6;">
+              Your preferences are used by the AI to compute a <strong style="color:var(--text-main); font-weight:600;">compatibility score</strong>
+              between you and other users. The more accurate your inputs, the better your matches.
             </div>
           </div>
-        </div>
 
-        <!-- Study & Guests -->
-        <div style="margin-bottom:24px;">
-          <div class="section-label"><i class="fa-solid fa-book-open fa-xs"></i> Study &amp; Guests</div>
-          <div class="form-row">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="studyHabits">Study habits</label>
-              <select id="studyHabits" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="IN_ROOM">Study in room</option>
-                <option value="LIBRARY">Library / outside</option>
-                <option value="FLEXIBLE">Flexible</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="guestFrequency">Guest frequency</label>
-              <select id="guestFrequency" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="RARELY">Rarely</option>
-                <option value="SOMETIMES">Sometimes</option>
-                <option value="OFTEN">Often</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Temperature -->
-        <div style="margin-bottom:28px;">
-          <div class="section-label"><i class="fa-solid fa-temperature-half fa-xs"></i> Temperature</div>
-          <div style="max-width:50%;">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="roomTemperature">Room temperature preference</label>
-              <select id="roomTemperature" class="form-select" required>
-                <option value="">Choose…</option>
-                <option value="COOL">Cool (below 22°C)</option>
-                <option value="MODERATE">Moderate (22–25°C)</option>
-                <option value="WARM">Warm (above 25°C)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="min-width:180px;">
-          <i class="fa-solid fa-floppy-disk fa-sm"></i> Save preferences
-        </button>
-
-      </form>
-
-      <!-- Info card -->
-      <div class="card" style="margin-top:16px;padding:16px 20px;display:flex;align-items:flex-start;gap:12px;">
-        <i class="fa-solid fa-circle-info" style="color:var(--primary);margin-top:2px;"></i>
-        <div style="font-size:13px;color:var(--text-2);line-height:1.6;">
-          Your preferences are used by the AI to compute a <strong style="color:var(--text-1);">compatibility score</strong>
-          between you and other users. The more accurate your inputs, the better your matches.
         </div>
       </div>
+    </main>
+  </div>
 
-    </div>
-  </main>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-<script src="script.js"></script>
+<script>
+// Logic preserved natively.
+// If script.js attaches to DOM elements natively, this works seamlessly.
+</script>
 </body>
 </html>
