@@ -575,6 +575,30 @@ a:hover { color: var(--primary-hover); }
   font-size: 12.5px;
   border-radius: 7px;
 }
+
+/* ── Upload Dropzone ──────────────────────────────── */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg-3);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+.upload-dropzone.dropzone-hover,
+.upload-dropzone.dropzone-active {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+.upload-dropzone.dropzone-hover {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
 /* ── Responsive ────────────────────────────────────── */
 @media (max-width: 900px) {
   .sidebar { display: none; }
