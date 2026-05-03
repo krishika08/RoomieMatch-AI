@@ -3,207 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome Back — RoomieMatch AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Sign In — RoomieMatch AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: #F8FAFC;
-            color: #1E293B;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        :root {
+            --bg-mesh: #f0f4ff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --white: #ffffff;
+            --radius-lg: 24px;
+            --radius-md: 12px;
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-mesh);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 1000px;
+            height: 640px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            box-sizing: border-box;
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        /* Side Branding */
+        .side-branding {
+            flex: 1;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: relative;
         }
 
-        .login-card {
-            background: #FFFFFF;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02);
-            padding: 40px;
-            box-sizing: border-box;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+        .side-branding::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
         }
 
-        .card-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .heading {
-            margin: 0 0 8px 0;
-            font-size: 26px;
-            font-weight: 600;
-            color: #0F172A;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
             letter-spacing: -0.02em;
         }
 
-        .sub-heading {
+        .logo-icon {
+            background: white;
+            color: var(--primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .branding-content h1 {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0 0 20px 0;
+            letter-spacing: -0.03em;
+        }
+
+        .branding-content p {
+            font-size: 17px;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .feature-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Form Area */
+        .form-area {
+            flex: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: var(--white);
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+        }
+
+        .form-header p {
+            color: var(--text-muted);
             margin: 0;
             font-size: 15px;
-            color: #64748B;
         }
 
         .form-group {
             margin-bottom: 20px;
+            position: relative;
         }
 
-        .form-label {
+        .label {
             display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
             margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .input-field {
+        .input-box {
+            position: relative;
+        }
+
+        .input-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        .form-input {
             width: 100%;
-            padding: 12px 16px;
-            font-size: 15px;
+            padding: 12px 14px 12px 42px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
             font-family: inherit;
-            color: #0F172A;
-            background-color: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 10px;
+            font-size: 15px;
             box-sizing: border-box;
             transition: all 0.2s ease;
             outline: none;
         }
 
-        .input-field::placeholder {
-            color: #94A3B8;
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
-        .input-field:focus {
-            background-color: #FFFFFF;
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-        }
-
-        .helper-text {
-            display: block;
-            margin-top: 6px;
-            font-size: 13px;
-            color: #94A3B8;
-        }
-
-        .form-actions {
-            margin-top: 32px;
-        }
-
-        .login-button {
-            width: 100%;
-            padding: 13px 16px;
-            font-size: 15px;
-            font-weight: 500;
-            font-family: inherit;
-            color: #FFFFFF;
-            background-color: #0F172A;
+        .eye-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
             border: none;
-            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .login-button:hover {
-            background-color: #334155;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px -2px rgba(15, 23, 42, 0.15);
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
         }
 
-        .login-button:active {
+        .submit-btn:active {
             transform: translateY(0);
         }
 
-        .card-footer {
-            margin-top: 28px;
+        .form-footer {
+            margin-top: 32px;
             text-align: center;
-        }
-
-        .footer-text {
-            margin: 0;
             font-size: 14px;
-            color: #64748B;
+            color: var(--text-muted);
         }
 
-        .link {
-            color: #3B82F6;
+        .form-footer a {
+            color: var(--primary);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s ease;
+            font-weight: 600;
         }
 
-        .link:hover {
-            color: #2563EB;
+        .form-footer a:hover {
             text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-container {
+                width: 90%;
+                height: auto;
+                flex-direction: column;
+            }
+            .side-branding {
+                padding: 40px;
+                text-align: center;
+            }
+            .side-branding .branding-content h1 {
+                font-size: 32px;
+            }
+            .feature-pills {
+                justify-content: center;
+            }
+            .form-area {
+                padding: 40px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Full screen centered container -->
-    <div class="login-container">
-        
-        <!-- Centered login card -->
-        <main class="login-card">
+    <div class="app-container">
+        <!-- Branding Side -->
+        <div class="side-branding">
+            <div class="logo">
+                <div class="logo-icon"><i data-lucide="home"></i></div>
+                <span>RoomieMatch AI</span>
+            </div>
             
-            <!-- Clear headings and subtle context -->
-            <header class="card-header">
-                <h1 class="heading">Welcome Back</h1>
-                <p class="sub-heading">Sign in to RoomieMatch AI to continue.</p>
-            </header>
+            <div class="branding-content">
+                <h1>The smart way to find roommates.</h1>
+                <p>Join thousands of students and discover the perfect co-living partner based on your habits, preferences, and lifestyle.</p>
+                
+                <div class="feature-pills">
+                    <span class="pill">✨ Smart Scoring</span>
+                    <span class="pill">🔒 Secure Data</span>
+                    <span class="pill">📍 Hostel Scoped</span>
+                </div>
+            </div>
 
-            <!-- Clean form layout -->
-            <section class="card-body">
-                <form id="loginForm">
-                    
-                    <!-- Form group for spacing and alignment -->
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" id="email" class="input-field" placeholder="you@university.edu" required aria-describedby="emailHelp">
-                        <small id="emailHelp" class="helper-text">Please use your official university email.</small>
+            <div style="font-size: 12px; opacity: 0.7;">
+                &copy; 2026 RoomieMatch AI. All rights reserved.
+            </div>
+        </div>
+
+        <!-- Form Side -->
+        <div class="form-area">
+            <div class="form-header">
+                <h2>Welcome back</h2>
+                <p>Enter your credentials to access your account.</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="label">University Email</label>
+                    <div class="input-box">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="email" class="form-input" placeholder="you@university.edu" required>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" id="loginBtn" class="login-button">
-                            Sign In
+                <div class="form-group">
+                    <label class="label">Password</label>
+                    <div class="input-box">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="eye-btn" id="togglePassword">
+                            <i data-lucide="eye" id="eyeIcon"></i>
                         </button>
                     </div>
-                    
-                </form>
-            </section>
+                </div>
 
-            <!-- Balanced footer -->
-            <footer class="card-footer">
-                <p class="footer-text">
-                    Don't have an account? <a href="signup.html" class="link">Create one</a>
-                </p>
-            </footer>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox"> Remember me
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
 
-        </main>
+                <button type="submit" class="submit-btn" id="loginBtn">
+                    Sign in to account
+                    <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="form-footer">
+                Don't have an account? <a href="signup.html">Create one for free</a>
+            </div>
+        </div>
     </div>
 
-    <!-- Core Logic -->
+    <!-- Initialization -->
     <script src="script.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Password toggle logic
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        toggleBtn.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Update icon
+            if (type === 'text') {
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        });
+    </script>
 </body>
 </html>
