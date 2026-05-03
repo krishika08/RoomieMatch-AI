@@ -1,9 +1,11 @@
 package com.roomiematch.roomiematchai.service;
 
 import com.roomiematch.roomiematchai.dto.AdminStudentResponseDTO;
+import com.roomiematch.roomiematchai.dto.RoomAssignmentResponseDTO;
 import com.roomiematch.roomiematchai.dto.RoommateRequestResponseDTO;
 import com.roomiematch.roomiematchai.entity.*;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
+import com.roomiematch.roomiematchai.repository.RoomAssignmentRepository;
 import com.roomiematch.roomiematchai.repository.RoommateRequestRepository;
 import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
@@ -26,15 +28,18 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final RoommateRequestRepository requestRepository;
+    private final RoomAssignmentRepository assignmentRepository;
     private final StudentProfileRepository profileRepository;
     private final AuthContextService authContext;
 
     public AdminService(UserRepository userRepository,
                         RoommateRequestRepository requestRepository,
+                        RoomAssignmentRepository assignmentRepository,
                         StudentProfileRepository profileRepository,
                         AuthContextService authContext) {
         this.userRepository = userRepository;
         this.requestRepository = requestRepository;
+        this.assignmentRepository = assignmentRepository;
         this.profileRepository = profileRepository;
         this.authContext = authContext;
     }
@@ -102,7 +107,7 @@ public class AdminService {
     }
 
     // ──────────────────────────────────────────────
-    //  3. Manually assign roommates
+    //  3. Manually assign roommates (creates request + assignment)
     // ──────────────────────────────────────────────
     @Transactional
     public RoommateRequestResponseDTO assignRoommates(Long userId1, Long userId2) {
@@ -128,28 +133,39 @@ public class AdminService {
             throw new IllegalStateException("You can only assign roommates within your hostel.");
         }
 
+        // Check if either user is already assigned
+        if (assignmentRepository.isUserAssigned(userId1)) {
+            throw new IllegalStateException("User " + user1.getEmail() + " is already assigned a roommate.");
+        }
+        if (assignmentRepository.isUserAssigned(userId2)) {
+            throw new IllegalStateException("User " + user2.getEmail() + " is already assigned a roommate.");
+        }
+
+        // Check for existing pending/accepted requests
         requestRepository.findBySenderIdAndReceiverIdAndStatus(userId1, userId2, RequestStatus.PENDING)
                 .ifPresent(r -> { throw new IllegalStateException("A pending request already exists between these users."); });
         requestRepository.findBySenderIdAndReceiverIdAndStatus(userId2, userId1, RequestStatus.PENDING)
                 .ifPresent(r -> { throw new IllegalStateException("A pending request already exists between these users."); });
-        requestRepository.findBySenderIdAndReceiverIdAndStatus(userId1, userId2, RequestStatus.ACCEPTED)
-                .ifPresent(r -> { throw new IllegalStateException("These users are already assigned as roommates."); });
-        requestRepository.findBySenderIdAndReceiverIdAndStatus(userId2, userId1, RequestStatus.ACCEPTED)
-                .ifPresent(r -> { throw new IllegalStateException("These users are already assigned as roommates."); });
 
+        // Create the accepted request
         RoommateRequest request = new RoommateRequest();
         request.setSender(user1);
         request.setReceiver(user2);
         request.setStatus(RequestStatus.ACCEPTED);
-
         RoommateRequest saved = requestRepository.save(request);
-        log.info("Admin assigned roommates: {} <-> {} (request #{})", user1.getEmail(), user2.getEmail(), saved.getId());
+
+        // Create the final room assignment
+        createAssignment(user1, user2, admin);
+
+        log.info("Admin assigned roommates: {} <-> {} (request #{}, assignment created)",
+                user1.getEmail(), user2.getEmail(), saved.getId());
 
         return new RoommateRequestResponseDTO(saved);
     }
 
     // ──────────────────────────────────────────────
     //  4. Admin respond to a request (accept/reject)
+    //     Auto-creates assignment on ACCEPTED
     // ──────────────────────────────────────────────
     @Transactional
     public RoommateRequestResponseDTO respondToRequest(Long requestId, String statusStr) {
@@ -181,14 +197,66 @@ public class AdminService {
             }
         }
 
+        // If accepting, check both users aren't already assigned
+        if (newStatus == RequestStatus.ACCEPTED) {
+            Long senderId = request.getSender().getId();
+            Long receiverId = request.getReceiver().getId();
+            if (assignmentRepository.isUserAssigned(senderId)) {
+                throw new IllegalStateException("User " + request.getSender().getEmail() + " is already assigned a roommate.");
+            }
+            if (assignmentRepository.isUserAssigned(receiverId)) {
+                throw new IllegalStateException("User " + request.getReceiver().getEmail() + " is already assigned a roommate.");
+            }
+        }
+
         request.setStatus(newStatus);
         RoommateRequest updated = requestRepository.save(request);
+
+        // Auto-create room assignment when request is accepted
+        if (newStatus == RequestStatus.ACCEPTED) {
+            createAssignment(request.getSender(), request.getReceiver(), admin);
+            log.info("Auto-created room assignment for accepted request #{}", requestId);
+        }
+
         return new RoommateRequestResponseDTO(updated);
     }
 
     // ──────────────────────────────────────────────
-    //  Helper
+    //  5. Get all room assignments (role-aware)
     // ──────────────────────────────────────────────
+    public List<RoomAssignmentResponseDTO> getAssignments(String hostelFilter) {
+        User admin = authContext.getLoggedInUser();
+        log.info("Admin {} fetching assignments, hostel filter: {}", admin.getEmail(), hostelFilter);
+
+        List<RoomAssignment> assignments;
+
+        if (admin.getRole() == Role.WARDEN) {
+            // Warden sees only their hostel
+            assignments = assignmentRepository.findByHostel(admin.getHostel());
+        } else if (hostelFilter != null && !hostelFilter.isBlank()) {
+            assignments = assignmentRepository.findByHostel(hostelFilter.toUpperCase());
+        } else {
+            assignments = assignmentRepository.findAll();
+        }
+
+        return assignments.stream()
+                .map(RoomAssignmentResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    // ──────────────────────────────────────────────
+    //  Helpers
+    // ──────────────────────────────────────────────
+    private void createAssignment(User user1, User user2, User assignedBy) {
+        RoomAssignment assignment = new RoomAssignment();
+        assignment.setUser1(user1);
+        assignment.setUser2(user2);
+        assignment.setHostel(user1.getHostel());
+        assignment.setAssignedBy(assignedBy);
+        assignment.setStatus(AssignmentStatus.ASSIGNED);
+        assignmentRepository.save(assignment);
+    }
+
     private AdminStudentResponseDTO toStudentDTO(User user) {
         boolean hasProfile = profileRepository.findByUserId(user.getId()).isPresent();
         return new AdminStudentResponseDTO(

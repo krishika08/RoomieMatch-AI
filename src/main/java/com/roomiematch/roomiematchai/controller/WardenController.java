@@ -67,4 +67,15 @@ public class WardenController {
         RoommateRequestResponseDTO result = wardenService.respondToRequest(id, status);
         return ResponseEntity.ok(new ApiResponse<>("Request " + status.toLowerCase() + " successfully", result));
     }
+
+    /**
+     * GET /warden/assignments
+     * Returns room assignments in the warden's hostel.
+     */
+    @GetMapping("/assignments")
+    public ResponseEntity<ApiResponse<List<RoomAssignmentResponseDTO>>> getAssignments() {
+        List<RoomAssignmentResponseDTO> assignments = wardenService.getAssignments();
+        return ResponseEntity.ok(new ApiResponse<>("Assignments fetched successfully", assignments));
+    }
 }
+

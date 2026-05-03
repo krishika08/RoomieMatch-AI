@@ -1,11 +1,13 @@
 package com.roomiematch.roomiematchai.service;
 
 import com.roomiematch.roomiematchai.dto.AdminStudentResponseDTO;
+import com.roomiematch.roomiematchai.dto.RoomAssignmentResponseDTO;
 import com.roomiematch.roomiematchai.dto.RoommateRequestResponseDTO;
 import com.roomiematch.roomiematchai.dto.WardenCreateDTO;
 import com.roomiematch.roomiematchai.entity.*;
 import com.roomiematch.roomiematchai.exception.DuplicateEmailException;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
+import com.roomiematch.roomiematchai.repository.RoomAssignmentRepository;
 import com.roomiematch.roomiematchai.repository.RoommateRequestRepository;
 import com.roomiematch.roomiematchai.repository.StudentProfileRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
@@ -29,17 +31,20 @@ public class WardenService {
 
     private final UserRepository userRepository;
     private final RoommateRequestRepository requestRepository;
+    private final RoomAssignmentRepository assignmentRepository;
     private final StudentProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthContextService authContext;
 
     public WardenService(UserRepository userRepository,
                          RoommateRequestRepository requestRepository,
+                         RoomAssignmentRepository assignmentRepository,
                          StudentProfileRepository profileRepository,
                          PasswordEncoder passwordEncoder,
                          AuthContextService authContext) {
         this.userRepository = userRepository;
         this.requestRepository = requestRepository;
+        this.assignmentRepository = assignmentRepository;
         this.profileRepository = profileRepository;
         this.passwordEncoder = passwordEncoder;
         this.authContext = authContext;
@@ -147,7 +152,30 @@ public class WardenService {
         RoommateRequest updated = requestRepository.save(request);
         log.info("Warden {} {} request #{}", warden.getEmail(), newStatus, requestId);
 
+        // Auto-create room assignment when warden accepts
+        if (newStatus == RequestStatus.ACCEPTED) {
+            RoomAssignment assignment = new RoomAssignment();
+            assignment.setUser1(request.getSender());
+            assignment.setUser2(request.getReceiver());
+            assignment.setHostel(request.getSender().getHostel());
+            assignment.setAssignedBy(warden);
+            assignment.setStatus(AssignmentStatus.ASSIGNED);
+            assignmentRepository.save(assignment);
+            log.info("Auto-created room assignment for accepted request #{}", requestId);
+        }
+
         return new RoommateRequestResponseDTO(updated);
+    }
+
+    // ──────────────────────────────────────────────
+    //  5. Get room assignments in warden's hostel
+    // ──────────────────────────────────────────────
+    public List<RoomAssignmentResponseDTO> getAssignments() {
+        User warden = authContext.getLoggedInUser();
+        List<RoomAssignment> assignments = assignmentRepository.findByHostel(warden.getHostel());
+        return assignments.stream()
+                .map(RoomAssignmentResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
     // ──────────────────────────────────────────────
@@ -168,3 +196,4 @@ public class WardenService {
         );
     }
 }
+

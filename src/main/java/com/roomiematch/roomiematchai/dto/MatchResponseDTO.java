@@ -13,6 +13,9 @@ public class MatchResponseDTO {
     private String email;
     private int compatibilityScore;
 
+    /** Per-trait score breakdown (sleep, cleanliness, noise, etc.) */
+    private ScoreBreakdownDTO breakdown;
+
     // Profile summary fields
     private String sleepSchedule;
     private String cleanlinessLevel;
@@ -22,3 +25,4 @@ public class MatchResponseDTO {
     private String guestFrequency;
     private String roomTemperature;
 }
+

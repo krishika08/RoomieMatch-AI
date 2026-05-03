@@ -1,10 +1,9 @@
 package com.roomiematch.roomiematchai.service;
 
 import com.roomiematch.roomiematchai.dto.RoommateRequestResponseDTO;
-import com.roomiematch.roomiematchai.entity.RequestStatus;
-import com.roomiematch.roomiematchai.entity.RoommateRequest;
-import com.roomiematch.roomiematchai.entity.User;
+import com.roomiematch.roomiematchai.entity.*;
 import com.roomiematch.roomiematchai.exception.ResourceNotFoundException;
+import com.roomiematch.roomiematchai.repository.RoomAssignmentRepository;
 import com.roomiematch.roomiematchai.repository.RoommateRequestRepository;
 import com.roomiematch.roomiematchai.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -17,13 +16,16 @@ import java.util.stream.Collectors;
 public class RoommateRequestService {
 
     private final RoommateRequestRepository requestRepository;
+    private final RoomAssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
     private final AuthContextService authContext;
 
     public RoommateRequestService(RoommateRequestRepository requestRepository,
+                                  RoomAssignmentRepository assignmentRepository,
                                   UserRepository userRepository,
                                   AuthContextService authContext) {
         this.requestRepository = requestRepository;
+        this.assignmentRepository = assignmentRepository;
         this.userRepository = userRepository;
         this.authContext = authContext;
     }
@@ -43,6 +45,16 @@ public class RoommateRequestService {
         // Fetch receiver — throws 404 if not found
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receiver user not found with id: " + receiverId));
+
+        // Validation: Sender must not already be assigned
+        if (assignmentRepository.isUserAssigned(sender.getId())) {
+            throw new IllegalStateException("You are already assigned a roommate. No further requests allowed.");
+        }
+
+        // Validation: Receiver must not already be assigned
+        if (assignmentRepository.isUserAssigned(receiverId)) {
+            throw new IllegalStateException("This user is already assigned a roommate.");
+        }
 
         // Validation: Must be in the same hostel
         if (sender.getHostel() != null && receiver.getHostel() != null
@@ -102,6 +114,7 @@ public class RoommateRequestService {
 
     // ──────────────────────────────────────────────
     //  4. Respond to a Request (Accept / Reject)
+    //     Auto-creates RoomAssignment on ACCEPTED
     // ──────────────────────────────────────────────
     @Transactional
     public RoommateRequestResponseDTO respondToRequest(Long requestId, String status) {
@@ -134,9 +147,31 @@ public class RoommateRequestService {
             throw new IllegalStateException("This request has already been " + request.getStatus().name().toLowerCase() + ".");
         }
 
+        // If accepting, verify neither user is already assigned
+        if (newStatus == RequestStatus.ACCEPTED) {
+            if (assignmentRepository.isUserAssigned(request.getSender().getId())) {
+                throw new IllegalStateException("The sender is already assigned a roommate.");
+            }
+            if (assignmentRepository.isUserAssigned(request.getReceiver().getId())) {
+                throw new IllegalStateException("You are already assigned a roommate.");
+            }
+        }
+
         // Update status
         request.setStatus(newStatus);
         RoommateRequest updatedRequest = requestRepository.save(request);
+
+        // Auto-create room assignment when student accepts
+        if (newStatus == RequestStatus.ACCEPTED) {
+            RoomAssignment assignment = new RoomAssignment();
+            assignment.setUser1(request.getSender());
+            assignment.setUser2(request.getReceiver());
+            assignment.setHostel(request.getSender().getHostel());
+            assignment.setAssignedBy(user); // the student who accepted
+            assignment.setStatus(AssignmentStatus.ASSIGNED);
+            assignmentRepository.save(assignment);
+        }
+
         return new RoommateRequestResponseDTO(updatedRequest);
     }
 }

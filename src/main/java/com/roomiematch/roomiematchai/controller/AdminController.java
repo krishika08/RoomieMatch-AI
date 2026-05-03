@@ -1,9 +1,6 @@
 package com.roomiematch.roomiematchai.controller;
 
-import com.roomiematch.roomiematchai.dto.AdminAssignRequestDTO;
-import com.roomiematch.roomiematchai.dto.AdminStudentResponseDTO;
-import com.roomiematch.roomiematchai.dto.ApiResponse;
-import com.roomiematch.roomiematchai.dto.RoommateRequestResponseDTO;
+import com.roomiematch.roomiematchai.dto.*;
 import com.roomiematch.roomiematchai.service.AdminService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -55,4 +52,17 @@ public class AdminController {
         RoommateRequestResponseDTO result = adminService.respondToRequest(id, status);
         return ResponseEntity.ok(new ApiResponse<>("Request " + status.toLowerCase() + " successfully", result));
     }
+
+    /**
+     * GET /admin/assignments?hostel=BIDHOLI_BOYS_HOSTEL
+     * Returns all finalized room assignments.
+     * Manager sees all; Warden sees only their hostel.
+     */
+    @GetMapping("/assignments")
+    public ResponseEntity<ApiResponse<List<RoomAssignmentResponseDTO>>> getAssignments(
+            @RequestParam(required = false) String hostel) {
+        List<RoomAssignmentResponseDTO> assignments = adminService.getAssignments(hostel);
+        return ResponseEntity.ok(new ApiResponse<>("Assignments fetched successfully", assignments));
+    }
 }
+
